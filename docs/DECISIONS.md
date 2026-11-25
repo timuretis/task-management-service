@@ -95,3 +95,11 @@ Newest at the bottom. Format:
 - Alternative: latest `uuid`, which is ESM-only (same problem as D12).
 - Why / trade-off: 11.x ships a CommonJS build and already has UUIDv7. We miss newer releases
   until the project moves to ESM.
+
+## D14. One global exception filter with a fixed error body (phase 1)
+- Decision: every failure returns `{ statusCode, message, error }`. Nest and body-parser 4xx
+  errors keep their status; anything unexpected becomes a plain 500 and only its stack is logged.
+- Alternative: Nest's built-in filter only.
+- Why / trade-off: the built-in one returns a different shape for non-Nest errors (such as a 413)
+  and logs client mistakes at ERROR level. One small filter keeps the contract the web app relies on
+  and never leaks messages, SQL or stacks.
