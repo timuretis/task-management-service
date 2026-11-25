@@ -62,3 +62,11 @@ Newest at the bottom. Format:
 - Alternative: Zod schemas with a custom pipe.
 - Why / trade-off: the NestJS default, easy to explain and to read. Costs two dependencies and
   the schemas cannot be shared with the React app as easily as Zod's.
+
+## D9. Custom request-logging middleware with JSON logs (phase 1)
+- Decision: own middleware logs one line per request (method, path, status, duration, request ID);
+  `x-request-id` is reused or generated and echoed. Nest's `ConsoleLogger({ json: true })` in production.
+  Bodies, query strings and auth headers are never logged.
+- Alternative: `nestjs-pino`.
+- Why / trade-off: meets the "custom middleware" requirement with no dependency and gives
+  CloudWatch-friendly JSON. Less feature-rich and slower than pino at very high volume.
