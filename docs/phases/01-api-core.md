@@ -14,22 +14,24 @@ in-memory store, with validation, request logging, basic hardening and 80%+ test
 - Custom request-logging middleware, `x-request-id`, JSON logs in production ([D9](../DECISIONS.md))
 - `GET /tasks`: newest first, max 100, no pagination; no `/api` prefix ([D10](../DECISIONS.md))
 - `helmet`, CORS allow-list from `CORS_ORIGIN`, `@nestjs/throttler` 100/min, 20/min on create ([D11](../DECISIONS.md))
+- Added while building: NestJS 11 and `uuid` 11 because newer majors are ESM-only (D12, D13);
+  one global exception filter with a fixed error body (D14)
 
 ## Tasks (in order, each one a small commit)
-1. Scaffold NestJS app in the `apps/api` workspace with TypeScript strict, ESLint, Prettier, Jest;
+- [x] 1. Scaffold NestJS app in the `apps/api` workspace with TypeScript strict, ESLint, Prettier, Jest;
    root `lint`/`test`/`build` scripts - done when `scripts/verify.sh` passes on the empty app.
-2. Config module: read and validate `PORT`, `CORS_ORIGIN`, `NODE_ENV`; update `.env.example` -
+- [x] 2. Config module: read and validate `PORT`, `CORS_ORIGIN`, `NODE_ENV`; update `.env.example` -
    done when bad values fail fast at startup (unit tested).
-3. Health module: `GET /health` returns `{ status, uptime, timestamp }` - done when controller unit test passes.
-4. Task model and `TasksRepository` interface plus async `InMemoryTasksRepository` (UUIDv7 ids) -
+- [x] 3. Health module: `GET /health` returns `{ status, uptime, timestamp }` - done when controller unit test passes.
+- [x] 4. Task model and `TasksRepository` interface plus async `InMemoryTasksRepository` (UUIDv7 ids) -
    done when repository unit tests pass.
-5. `TasksService` (create, list newest 100) - done when unit tests with a mocked repository pass.
-6. `CreateTaskDto`, global `ValidationPipe`, `TasksController` (`GET`/`POST /tasks`) -
+- [x] 5. `TasksService` (create, list newest 100) - done when unit tests with a mocked repository pass.
+- [x] 6. `CreateTaskDto`, global `ValidationPipe`, `TasksController` (`GET`/`POST /tasks`) -
    done when DTO and controller unit tests pass.
-7. Request-logging middleware with request ID and JSON logger - done when middleware unit tests pass.
-8. Hardening in bootstrap: `helmet`, CORS, throttler, body limit, shutdown hooks -
+- [x] 7. Request-logging middleware with request ID and JSON logger - done when middleware unit tests pass.
+- [x] 8. Hardening in bootstrap: `helmet`, CORS, throttler, body limit, shutdown hooks -
    done when the app starts and these are covered by e2e.
-9. E2E suite with `supertest` - done when all e2e cases below pass and coverage is 80%+.
+- [x] 9. E2E suite with `supertest` - done when all e2e cases below pass and coverage is 80%+.
 
 ## Tests
 - Unit: service (repository mocked), controllers (service mocked), in-memory repository,
