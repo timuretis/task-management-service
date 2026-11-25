@@ -1,0 +1,35 @@
+{
+  "model": "claude-opus-5-5",
+  "effortLevel": "medium",
+  "permissions": {
+    "allow": [
+      "Bash(npm ci)",
+      "Bash(npm test *)",
+      "Bash(npm run *)",
+      "Bash(bash scripts/verify.sh)",
+      "Bash(terraform fmt *)",
+      "Bash(terraform validate *)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./**/*.pem)",
+      "Read(./**/*.tfstate)",
+      "Bash(terraform apply *)",
+      "Bash(terraform destroy *)",
+      "Bash(git push --force *)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/session-start.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

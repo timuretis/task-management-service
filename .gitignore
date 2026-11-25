@@ -1,0 +1,25 @@
+node_modules/
+dist/
+build/
+coverage/
+*.log
+.DS_Store
+
+# secrets and state
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfplan
+
+# personal agent settings
+CLAUDE.local.md
+.claude/settings.local.json
+
+# keep the company's assignment document out of a public repo
+*.pdf
