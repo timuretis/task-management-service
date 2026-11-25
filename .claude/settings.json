@@ -1,5 +1,5 @@
 {
-  "model": "claude-opus-5-5",
+  "model": "sonnet",
   "effortLevel": "medium",
   "permissions": {
     "allow": [
@@ -9,6 +9,11 @@
       "Bash(bash scripts/verify.sh)",
       "Bash(terraform fmt *)",
       "Bash(terraform validate *)"
+    ],
+    "ask": [
+      "Bash(gh pr merge *)",
+      "mcp__github__merge_pull_request",
+      "mcp__github__enable_pr_auto_merge"
     ],
     "deny": [
       "Read(./.env)",
@@ -27,6 +32,26 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/session-start.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-branch.mjs"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|mcp__github__merge_pull_request|mcp__github__enable_pr_auto_merge",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-merge.mjs"
           }
         ]
       }
