@@ -40,3 +40,10 @@ Newest at the bottom. Format:
 - Alternative: give the Claude cloud environment AWS keys.
 - Why / trade-off: AWS keys never leave the author's machine. It costs a few manual steps,
   covered in `docs/aws-setup.md`.
+
+## D6. PostgreSQL, behind a repository interface (phase 1)
+- Decision: PostgreSQL is the database (added in phase 2). Phase 1 uses an async in-memory
+  `TasksRepository` behind the same interface, so the service does not change when Postgres arrives.
+- Alternative: Postgres from phase 1, or an in-memory/JSON store only.
+- Why / trade-off: keeps phase 1 small and gives a clear seam for mocking and swapping the store.
+  The in-memory class is extra code, but it can stay as a test double.
