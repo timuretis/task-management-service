@@ -1,6 +1,7 @@
 import { ConsoleLogger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { configureApp } from './app.setup';
 import { loadConfig } from './config';
 
 async function bootstrap(): Promise<void> {
@@ -9,6 +10,7 @@ async function bootstrap(): Promise<void> {
   // JSON lines in production so CloudWatch can filter by field; readable text elsewhere.
   const logger = new ConsoleLogger({ json: config.nodeEnv === 'production' });
   const app = await NestFactory.create(AppModule, { logger });
+  configureApp(app, config);
   await app.listen(config.port);
 }
 
