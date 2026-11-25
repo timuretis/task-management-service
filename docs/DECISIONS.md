@@ -70,3 +70,9 @@ Newest at the bottom. Format:
 - Alternative: `nestjs-pino`.
 - Why / trade-off: meets the "custom middleware" requirement with no dependency and gives
   CloudWatch-friendly JSON. Less feature-rich and slower than pino at very high volume.
+
+## D10. `GET /tasks` returns the newest 100, no pagination yet (phase 1)
+- Decision: list is newest first and capped at 100; no `/api` prefix or version in the path.
+- Alternative: cursor pagination (`?limit&cursor` on the UUIDv7 id) from the start.
+- Why / trade-off: bounded response time with no extra API surface. Older tasks are not
+  reachable past 100; cursor pagination can be added later without breaking clients.
