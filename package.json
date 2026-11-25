@@ -1,0 +1,11 @@
+{
+  "name": "task-management-service",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present"
+  }
+}
