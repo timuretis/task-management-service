@@ -76,3 +76,10 @@ Newest at the bottom. Format:
 - Alternative: cursor pagination (`?limit&cursor` on the UUIDv7 id) from the start.
 - Why / trade-off: bounded response time with no extra API surface. Older tasks are not
   reachable past 100; cursor pagination can be added later without breaking clients.
+
+## D11. Helmet, CORS allow-list and in-app rate limiting (phase 1)
+- Decision: `helmet`; CORS only for origins in `CORS_ORIGIN`; `@nestjs/throttler` at
+  100 req/min per IP and 20 req/min on `POST /tasks`; config read from env in one `config.ts`.
+- Alternative: no app-level limits, rely on AWS (ALB + WAF) later.
+- Why / trade-off: protects the public URL and the in-memory store at no cost. Throttler counters
+  are per instance, so at 10x with several instances they would need a shared store (Redis).
