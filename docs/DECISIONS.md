@@ -89,3 +89,9 @@ Newest at the bottom. Format:
 - Alternative: NestJS 12, which is ESM-only.
 - Why / trade-off: Jest and ts-jest cannot load ESM-only packages without extra setup
   (`Must use import to load ES Module`). Nest 11 is stable and conventional; we upgrade later if needed.
+
+## D13. `uuid` pinned to 11.x (phase 1)
+- Decision: use `uuid` 11 for `v7()`, not the latest 14.
+- Alternative: latest `uuid`, which is ESM-only (same problem as D12).
+- Why / trade-off: 11.x ships a CommonJS build and already has UUIDv7. We miss newer releases
+  until the project moves to ESM.
