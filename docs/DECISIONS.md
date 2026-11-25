@@ -83,3 +83,9 @@ Newest at the bottom. Format:
 - Alternative: no app-level limits, rely on AWS (ALB + WAF) later.
 - Why / trade-off: protects the public URL and the in-memory store at no cost. Throttler counters
   are per instance, so at 10x with several instances they would need a shared store (Redis).
+
+## D12. NestJS 11 (CommonJS), not NestJS 12 (phase 1)
+- Decision: pin `@nestjs/*` to 11.x and compile to CommonJS.
+- Alternative: NestJS 12, which is ESM-only.
+- Why / trade-off: Jest and ts-jest cannot load ESM-only packages without extra setup
+  (`Must use import to load ES Module`). Nest 11 is stable and conventional; we upgrade later if needed.
