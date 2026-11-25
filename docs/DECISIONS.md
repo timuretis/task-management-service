@@ -47,3 +47,11 @@ Newest at the bottom. Format:
 - Alternative: Postgres from phase 1, or an in-memory/JSON store only.
 - Why / trade-off: keeps phase 1 small and gives a clear seam for mocking and swapping the store.
   The in-memory class is extra code, but it can stay as a test double.
+
+## D7. Task IDs are UUIDv7 (phase 1)
+- Decision: `id` is a UUIDv7. Phase 1 generates it in the app with the `uuid` package;
+  phase 2 moves generation to Postgres 18 (`DEFAULT uuidv7()`).
+- Alternative: UUIDv4 (`crypto.randomUUID()`, no dependency) or an auto-increment integer.
+- Why / trade-off: time-ordered IDs keep B-tree inserts at the end of the index and sort like
+  `createdAt`; unlike integers they are not guessable. Costs one small dependency and
+  reveals the creation time, which is public anyway.
