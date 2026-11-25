@@ -1,0 +1,42 @@
+# Decision log
+
+One entry per decision that is hard to reverse or would surprise a reader.
+Newest at the bottom. Format:
+
+```
+## D<n>. <title> (phase <n>)
+- Decision: what we chose.
+- Alternative: the main option we did not choose.
+- Why / trade-off: in one or two sentences.
+```
+
+## D1. AI workflow: plan on Opus, build on Sonnet (phase 0)
+- Decision: Sonnet is the default model; `/brainstorm` and `/to-spec` run on Opus.
+- Alternative: Opus for everything.
+- Why / trade-off: Opus is best at design choices, but the Pro plan limits run out fast.
+  Coding to an agreed spec works well on Sonnet.
+
+## D2. Independent review once per phase (phase 0)
+- Decision: a read-only `code-reviewer` subagent (Sonnet) reviews the whole phase diff before the PR.
+- Alternative: review before every commit.
+- Why / trade-off: about 6 reviews instead of 30+, so far fewer tokens. A problem can sit
+  for a few commits before it is caught, but nothing reaches `main` unreviewed.
+
+## D3. Project skills split by area (phase 0)
+- Decision: small skills (`backend-nest`, `frontend-react`, `testing`, `infra-deploy`, ...)
+  that load only for matching work; `AGENTS.md` stays short.
+- Alternative: one large `CLAUDE.md` with all the rules.
+- Why / trade-off: less context per task means fewer tokens and better focus. Rules are spread
+  over several files, so `AGENTS.md` points to them.
+
+## D4. Guardrails as hooks, not only instructions (phase 0)
+- Decision: hooks block commits/pushes on `main`/`master` and ask before any PR merge.
+- Alternative: rely on the written rules in `AGENTS.md`.
+- Why / trade-off: a hook is enforced and an instruction can be missed. Hooks only guard
+  Claude, so GitHub branch protection on `main` is still recommended for humans.
+
+## D5. Humans run `terraform apply` (phase 0)
+- Decision: Claude writes and validates Terraform; the author runs `apply` locally.
+- Alternative: give the Claude cloud environment AWS keys.
+- Why / trade-off: AWS keys never leave the author's machine. It costs a few manual steps,
+  covered in `docs/aws-setup.md`.
