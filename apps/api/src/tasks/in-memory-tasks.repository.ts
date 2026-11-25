@@ -5,6 +5,7 @@ import { TasksRepository } from './tasks.repository';
 
 @Injectable()
 export class InMemoryTasksRepository extends TasksRepository {
+  // Grows without bound; fine for phase 1 (data is lost on restart, writes are rate limited).
   private readonly tasks: Task[] = [];
 
   async create(newTask: NewTask): Promise<Task> {
@@ -21,6 +22,7 @@ export class InMemoryTasksRepository extends TasksRepository {
 
   async findRecent(limit: number): Promise<Task[]> {
     // Tasks are appended in creation order, so the newest are at the end.
-    return this.tasks.slice(-limit).reverse();
+    // Math.max avoids slice(-0), which would return every task when limit is 0.
+    return this.tasks.slice(Math.max(0, this.tasks.length - limit)).reverse();
   }
 }

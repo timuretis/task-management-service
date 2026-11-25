@@ -12,7 +12,8 @@ const DEV_CORS_ORIGIN = 'http://localhost:5173';
 
 function parsePort(value: string | undefined): number {
   const port = Number(value ?? 3000);
-  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+  // Number() alone would accept forms like "3e3" or "0x10".
+  if (!/^\d+$/.test(value ?? '3000') || port < 1 || port > 65535) {
     throw new Error(`PORT must be an integer between 1 and 65535, got "${value}"`);
   }
   return port;

@@ -18,7 +18,15 @@ function describe(exception: unknown): ErrorBody {
   if (exception instanceof HttpException) {
     const statusCode = exception.getStatus();
     const response = exception.getResponse();
-    if (typeof response === 'object') return response as ErrorBody;
+    if (typeof response === 'object') {
+      // Build the body field by field so a custom exception can't change the error shape.
+      const { message, error } = response as Partial<ErrorBody>;
+      return {
+        statusCode,
+        message: message ?? exception.message,
+        error: error ?? STATUS_CODES[statusCode] ?? 'Error',
+      };
+    }
     return { statusCode, message: response, error: STATUS_CODES[statusCode] ?? 'Error' };
   }
   if (isClientHttpError(exception)) {

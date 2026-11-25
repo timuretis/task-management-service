@@ -21,6 +21,12 @@ describe('InMemoryTasksRepository', () => {
     await expect(repository.findRecent(10)).resolves.toEqual([]);
   });
 
+  it('returns nothing for a limit of 0', async () => {
+    await repository.create({ title: 'only' });
+
+    await expect(repository.findRecent(0)).resolves.toEqual([]);
+  });
+
   it('lists the newest tasks first, capped at the limit', async () => {
     for (const title of ['first', 'second', 'third']) {
       await repository.create({ title });

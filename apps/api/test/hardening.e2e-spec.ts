@@ -52,9 +52,15 @@ describe('Hardening (e2e)', () => {
 
   it('limits all routes to 100 requests per minute, then answers 429', async () => {
     for (let i = 0; i < 100; i++) {
-      await request(app.getHttpServer()).get('/health').expect(200);
+      await request(app.getHttpServer()).get('/tasks').expect(200);
     }
 
-    await request(app.getHttpServer()).get('/health').expect(429);
+    await request(app.getHttpServer()).get('/tasks').expect(429);
+  });
+
+  it('never rate limits /health, so load balancer probes keep working', async () => {
+    for (let i = 0; i < 101; i++) {
+      await request(app.getHttpServer()).get('/health').expect(200);
+    }
   });
 });

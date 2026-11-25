@@ -24,5 +24,8 @@ bash scripts/verify.sh   # lint, unit + e2e tests with coverage (80% gate), buil
 ## Deployment
 ## System Architecture
 ### Scalability (10x traffic)
+- Rate limit counters (`@nestjs/throttler`) live in each instance's memory. With several
+  instances the limits apply per instance; share them through Redis at that point.
+- Behind a load balancer set Express `trust proxy` (phase 5), or every user shares the proxy's IP.
 ### Observability
 ### AI Utilization

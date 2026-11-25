@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 
 export interface HealthResponse {
   status: 'ok';
@@ -6,6 +7,8 @@ export interface HealthResponse {
   timestamp: string;
 }
 
+// Load balancer probes hit this often; a 429 here would mark a healthy target as down.
+@SkipThrottle()
 @Controller('health')
 export class HealthController {
   @Get()

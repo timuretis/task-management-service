@@ -103,3 +103,9 @@ Newest at the bottom. Format:
 - Why / trade-off: the built-in one returns a different shape for non-Nest errors (such as a 413)
   and logs client mistakes at ERROR level. One small filter keeps the contract the web app relies on
   and never leaks messages, SQL or stacks.
+
+## D15. `trust proxy` is set in phase 5, not now (phase 1)
+- Decision: the API does not trust `X-Forwarded-For` yet; phase 5 sets `trust proxy` for the real load balancer.
+- Alternative: always set `trust proxy` now.
+- Why / trade-off: with no proxy in front, a client could fake that header and dodge the per-IP rate limit.
+  Until phase 5 nothing runs behind a proxy, so the limit is accurate where we run today.

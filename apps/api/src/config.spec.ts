@@ -22,7 +22,7 @@ describe('loadConfig', () => {
     });
   });
 
-  it.each(['abc', '0', '70000', '3.5'])('rejects PORT=%s', (port) => {
+  it.each(['abc', '0', '70000', '3.5', '3e3', '0x10'])('rejects PORT=%s', (port) => {
     expect(() => loadConfig({ PORT: port })).toThrow('PORT');
   });
 

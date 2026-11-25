@@ -1,4 +1,10 @@
-import { ArgumentsHost, BadRequestException, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ArgumentsHost,
+  BadRequestException,
+  HttpException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { AllExceptionsFilter } from './all-exceptions.filter';
 
 function run(exception: unknown): { status: jest.Mock; json: jest.Mock } {
@@ -36,6 +42,16 @@ describe('AllExceptionsFilter', () => {
     const { json } = run(new NotFoundException('nothing here'));
 
     expect(json).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 404 }));
+  });
+
+  it('fills in missing fields of a custom HttpException object body', () => {
+    const { json } = run(new HttpException({ code: 'X' }, 409));
+
+    expect(json).toHaveBeenCalledWith({
+      statusCode: 409,
+      message: 'Http Exception',
+      error: 'Conflict',
+    });
   });
 
   it('wraps an HttpException with a plain string response', () => {
