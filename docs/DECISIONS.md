@@ -55,3 +55,10 @@ Newest at the bottom. Format:
 - Why / trade-off: time-ordered IDs keep B-tree inserts at the end of the index and sort like
   `createdAt`; unlike integers they are not guessable. Costs one small dependency and
   reveals the creation time, which is public anyway.
+
+## D8. Validation with class-validator and a global ValidationPipe (phase 1)
+- Decision: DTO classes with `class-validator` decorators; global `ValidationPipe` with
+  `whitelist`, `forbidNonWhitelisted` and `transform` (trims input). Body limit 100 KB.
+- Alternative: Zod schemas with a custom pipe.
+- Why / trade-off: the NestJS default, easy to explain and to read. Costs two dependencies and
+  the schemas cannot be shared with the React app as easily as Zod's.
