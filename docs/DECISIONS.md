@@ -127,3 +127,11 @@ Newest at the bottom. Format:
 - Why / trade-off: two queries do not justify an ORM; every query and index is visible SQL that is easy to
   explain. Rows are mapped by hand and the code grows less gracefully if the schema gets large.
   `node-pg-migrate` is pinned to 7.x because 8 and later are ESM-only (same reason as D12 and D13).
+
+## D18. The app keeps generating UUIDv7 ids; the database does not (phase 2)
+- Decision: `id` stays an app-generated UUIDv7 (the `uuid` package stays a production dependency);
+  the column is a plain `uuid PRIMARY KEY`. This replaces the "Postgres 18 `DEFAULT uuidv7()`" part of D7.
+- Alternative: Postgres 18 generates the id.
+- Why / trade-off: works on every Postgres version, and e2e runs against a real database in the cloud
+  session (Postgres 16, no Docker). The id exists before the insert; ids from several instances are
+  ordered by each instance's clock, which is close enough for index locality.
