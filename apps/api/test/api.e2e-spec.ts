@@ -123,9 +123,9 @@ describe('API with a failing store (e2e)', () => {
   it('answers 500 without leaking internal details', async () => {
     jest.spyOn(Logger.prototype, 'error').mockImplementation();
     const failing = { findRecent: () => Promise.reject(new Error('relation "tasks" is missing')) };
-    const app = await createTestApp((builder) =>
-      builder.overrideProvider(TasksRepository).useValue(failing),
-    );
+    const app = await createTestApp({
+      customize: (builder) => builder.overrideProvider(TasksRepository).useValue(failing),
+    });
 
     const res = await request(app.getHttpServer()).get('/tasks').expect(500);
 

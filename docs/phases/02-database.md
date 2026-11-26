@@ -26,11 +26,12 @@ contract from phase 1 does not change.
 4. Database module with the `Pool` provider, closed on shutdown - done when its unit tests pass.
 5. `PostgresTasksRepository` (create, newest first with a limit) - done when unit tests with a mocked pool
    check the SQL, the parameters, the row mapping and error propagation.
-6. Wire `TasksModule` to the Postgres repository; remove the in-memory repository if nothing uses it -
-   done when the existing e2e cases pass unchanged.
+6. Wire `TasksModule` to the Postgres repository; remove the in-memory repository if nothing uses it.
+   The app cannot start without a pool, so the minimal `pg-mem` e2e harness (migrations applied to a fresh
+   emulator per app) lands here too - done when the existing e2e cases pass unchanged.
 7. `GET /health` checks the database: 200 when it answers, 503 `{ status: "error" }` when it does not -
    done when unit and e2e tests pass.
-8. e2e harness on `pg-mem`: apply the migration SQL, clean tables between tests, keep the phase 1 cases -
+8. Extra `pg-mem` e2e cases: created tasks survive an app restart, and a database failure gives a safe 500 -
    done when `bash scripts/verify.sh` passes with no database running.
 9. Opt-in real-Postgres suite (skipped without `TEST_DATABASE_URL`, database name must end in `_test`) -
    done when it passes against the local Postgres 16 here.
