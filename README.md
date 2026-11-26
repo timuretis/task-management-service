@@ -30,9 +30,8 @@ psql -U postgres -c "CREATE ROLE tasks LOGIN PASSWORD 'tasks'" \
   -c "CREATE DATABASE tasks OWNER tasks" -c "CREATE DATABASE tasks_test OWNER tasks"
 ```
 
-The compose file and the `postgres:18` image were not run while building phase 2 (the build
-environment had no Docker); the migration and tests ran on PostgreSQL 16. Use `docker compose down -v`
-to reset the local database.
+The migration and the opt-in real-Postgres suite pass on both PostgreSQL 16 and the `postgres:18`
+image from `docker-compose.yml`. Use `docker compose down -v` to reset the local database.
 
 ## Running tests
 ```bash
