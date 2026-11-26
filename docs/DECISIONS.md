@@ -193,3 +193,14 @@ Newest at the bottom. Format:
 - Alternative: one image where the API also serves the built web files, or hosting the web files on S3.
 - Why / trade-off: one job per image, small runtime images and a fit with D22 (separate origins, CORS).
   `VITE_API_URL` is baked in at build time, so each environment needs its own web image build.
+
+## D25. CI runs verify with Postgres 18 and a compose smoke test (phase 4)
+- Decision: one workflow on every pull request and on every update of the default branch, permissions
+  `contents: read` only. Job `verify`: Node 24, `npm ci` (cached), `bash scripts/verify.sh` with a `postgres:18`
+  service container and `TEST_DATABASE_URL` set, so the real-Postgres suite runs on every change (D21). Job
+  `docker`: build both images, `docker compose up`, then check `/health`, the web page, and create and list a
+  task. Actions are pinned to major version tags, npm is cached, and a newer run cancels the older one.
+- Alternative: `verify` plus a plain `docker build` with no smoke test.
+- Why / trade-off: images and the compose file are proven on every change, not only built. The smoke test is the
+  slower, more fragile part. Pinning to tags is easier to read than commit SHAs but trusts the action's author;
+  SHA pinning is the upgrade path. No image publishing or deploy yet (phase 5).
