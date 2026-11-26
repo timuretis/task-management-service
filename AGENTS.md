@@ -22,8 +22,8 @@ The root `package.json` uses npm workspaces.
 - Root `package.json` must expose `lint`, `test` and `build` scripts.
 
 ## Workflow
-1. Each phase: `/brainstorm` -> `/to-spec` -> build in small commits -> `/ship-phase`.
-2. One branch and one PR per phase. Never commit to `main`/`master`; never merge a PR.
+1. Each phase: `/brainstorm` -> `/to-spec` -> build in small commits -> `/ship-phase` -> your review -> `/merge-pr`.
+2. One branch and one PR per phase. Never commit to `main`/`master`; never merge a PR on your own (only `/merge-pr`, when the user invokes it after their review).
 3. Independent review by the `code-reviewer` subagent once per phase, before the PR.
 
 ## Rules
