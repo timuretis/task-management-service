@@ -23,6 +23,21 @@ describe('Database behaviour (e2e)', () => {
     expect(list.body).toEqual([created.body]);
   });
 
+  it('stops the HTTP server before it closes the pool, so requests in flight can finish', async () => {
+    const order: string[] = [];
+    const pool = createPgMemDatabase().createPool();
+    const end = pool.end.bind(pool);
+    pool.end = (() => (order.push('pool closed'), end())) as typeof pool.end;
+    const app = await createTestApp({ pool });
+    const http = app.getHttpAdapter();
+    const closeHttp = http.close.bind(http);
+    http.close = () => (order.push('http server closed'), closeHttp());
+
+    await app.close();
+
+    expect(order).toEqual(['http server closed', 'pool closed']);
+  });
+
   it('keeps tasks of different apps apart when they use different databases', async () => {
     const one = await createTestApp();
     const two = await createTestApp();

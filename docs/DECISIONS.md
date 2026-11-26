@@ -127,6 +127,8 @@ Newest at the bottom. Format:
 - Why / trade-off: two queries do not justify an ORM; every query and index is visible SQL that is easy to
   explain. Rows are mapped by hand and the code grows less gracefully if the schema gets large.
   `node-pg-migrate` is pinned to 7.x because 8 and later are ESM-only (same reason as D12 and D13).
+  Migrations run through its API from a 25-line wrapper script, which reads `.env` and gives a clear error
+  when `DATABASE_URL` is missing; the same package is used by the real-Postgres test suite.
 
 ## D18. The app keeps generating UUIDv7 ids; the database does not (phase 2)
 - Decision: `id` stays an app-generated UUIDv7 (the `uuid` package stays a production dependency);
@@ -152,6 +154,9 @@ Newest at the bottom. Format:
 - Alternative: keep `/health` free of the database and add a separate readiness endpoint.
 - Why / trade-off: one endpoint, as the requirements list, and a real signal for deploy checks. A database
   outage makes the API report unhealthy, which an orchestrator could treat as a reason to restart it.
+  The check shares the request pool: if all 10 connections stay busy for 2 s, a healthy but overloaded
+  instance also answers 503. A separate one-connection pool for health would avoid that, at the cost of
+  an eleventh connection per instance; revisit if probes ever flap under load.
 
 ## D21. e2e on `pg-mem`, plus an opt-in real-Postgres suite (phase 2)
 - Decision: the default e2e suite runs the real `PostgresTasksRepository` against `pg-mem` (dev dependency),

@@ -3,6 +3,7 @@ import { Pool } from 'pg';
 import runner from 'node-pg-migrate';
 import request from 'supertest';
 import { PostgresTasksRepository } from '../src/tasks/postgres-tasks.repository';
+import { assertSafeTestDatabase } from './assert-safe-test-database';
 import { createTestApp } from './create-test-app';
 
 /**
@@ -12,10 +13,8 @@ import { createTestApp } from './create-test-app';
  */
 const databaseUrl = process.env.TEST_DATABASE_URL;
 
-// This suite drops the whole schema, so it must never touch a development database.
-if (databaseUrl && !new URL(databaseUrl).pathname.slice(1).endsWith('_test')) {
-  throw new Error('TEST_DATABASE_URL must point to a database whose name ends in _test');
-}
+// This suite drops the whole schema, so it must never touch a database that could hold real data.
+if (databaseUrl) assertSafeTestDatabase(databaseUrl);
 
 const MIGRATIONS_DIR = join(__dirname, '..', 'migrations');
 
@@ -45,6 +44,9 @@ const uuid = (n: number): string => `00000000-0000-7000-8000-${String(n).padStar
 
   beforeAll(async () => {
     pool = new Pool({ connectionString: databaseUrl });
+    // Last line of defence: ask the server itself before dropping anything.
+    const { rows } = await pool.query('SELECT current_database() AS name');
+    if (!rows[0].name.endsWith('_test')) throw new Error(`Refusing to reset ${rows[0].name}`);
     await pool.query('DROP SCHEMA public CASCADE; CREATE SCHEMA public');
     await migrate('up', Infinity);
   });
@@ -203,9 +205,21 @@ const uuid = (n: number): string => `00000000-0000-7000-8000-${String(n).padStar
       );
       await pool.query('ANALYZE tasks');
 
-      const { rows } = await pool.query(
-        'EXPLAIN SELECT * FROM tasks ORDER BY created_at DESC, id DESC LIMIT 100',
-      );
+      // SET LOCAL lasts for one transaction on one connection, so it cannot leak to other tests.
+      // Without it the planner may pick a sequential scan on some versions; we want to prove the
+      // index can serve the ordering, not second-guess the planner's cost estimates.
+      const client = await pool.connect();
+      let rows: Record<string, string>[];
+      try {
+        await client.query('BEGIN');
+        await client.query('SET LOCAL enable_seqscan = off');
+        ({ rows } = await client.query(
+          'EXPLAIN SELECT * FROM tasks ORDER BY created_at DESC, id DESC LIMIT 100',
+        ));
+      } finally {
+        await client.query('ROLLBACK');
+        client.release();
+      }
 
       const plan = rows.map((row) => row['QUERY PLAN']).join('\n');
       expect(plan).toContain('tasks_created_at_id_idx');

@@ -11,7 +11,7 @@ describe('DatabaseModule', () => {
       .useValue(pool)
       .compile();
 
-    await moduleRef.get(DatabaseModule).onModuleDestroy();
+    await moduleRef.get(DatabaseModule).onApplicationShutdown();
 
     expect(pool.end).toHaveBeenCalledTimes(1);
   });
