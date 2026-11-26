@@ -126,7 +126,10 @@ Newest at the bottom. Format:
 - Alternative: TypeORM (`@nestjs/typeorm` 11), or Drizzle.
 - Why / trade-off: two queries do not justify an ORM; every query and index is visible SQL that is easy to
   explain. Rows are mapped by hand and the code grows less gracefully if the schema gets large.
-  `node-pg-migrate` is pinned to 7.x because 8 and later are ESM-only (same reason as D12 and D13).
+  `node-pg-migrate` is pinned to 7.x because 8.x and 9.x declare `type: module` (same reason as D12 and D13).
+  Known cost: 7.x pulls in `glob` and `minimatch` versions with advisories (`npm audit --omit=dev`: 2 high,
+  1 moderate). They only scan our own migrations folder, the `glob` CLI is never run and no untrusted pattern
+  reaches them, so the practical risk is low. The only fix is 9.x, which needs the move to ESM; revisit then.
   Migrations run through its API from a 25-line wrapper script, which reads `.env` and gives a clear error
   when `DATABASE_URL` is missing; the same package is used by the real-Postgres test suite.
 
