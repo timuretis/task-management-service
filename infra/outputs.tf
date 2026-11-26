@@ -25,3 +25,8 @@ output "log_group" {
   description = "CloudWatch log group with the container logs."
   value       = aws_cloudwatch_log_group.app.name
 }
+
+output "deploy_role_arn" {
+  description = "Set as the GitHub repository variable AWS_DEPLOY_ROLE_ARN (D34)."
+  value       = aws_iam_role.deploy.arn
+}

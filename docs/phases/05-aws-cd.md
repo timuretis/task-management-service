@@ -33,7 +33,7 @@ Terraform provisions one EC2 instance that runs the app over HTTPS at `https://t
 - [x] 4. Terraform for the instance: security group, key pair, IAM instance role (SSM, write to its log group),
    log group, encrypted disk, IMDSv2 hop limit 1, Elastic IP, `ignore_changes` on AMI and user data; outputs for the IP,
    the DNS records to add and the role ARN - done when `fmt` and `validate` pass in `verify.sh`.
-- [ ] 5. Terraform for CI access: GitHub OIDC provider and a deploy role that trusts only this repo's `main` and may
+- [x] 5. Terraform for CI access: GitHub OIDC provider and a deploy role that trusts only this repo's `main` and may
    only send and read SSM commands on the tagged instance - done when `validate` passes.
 - [ ] 6. First-boot script (Docker, Compose, Git, clone to `/opt/app`, password `.env`) and the deploy script
    (checkout SHA, pull, `up -d --wait`) - done when both pass `bash -n` and a dry run in a local container.

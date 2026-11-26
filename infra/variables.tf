@@ -42,3 +42,9 @@ variable "log_group_name" {
   type        = string
   default     = "/task-management-service"
 }
+
+variable "github_repository" {
+  description = "The GitHub repository (owner/name) whose main branch may deploy (D29)."
+  type        = string
+  default     = "timuretis/task-management-service"
+}
