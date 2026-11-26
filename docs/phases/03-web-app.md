@@ -20,10 +20,10 @@ the task list with loading, empty and error states. It talks to the existing API
    an 80% coverage gate, `.env.example` - done when `bash scripts/verify.sh` passes on the empty app.
 - [x] 3. Typed API wrapper: base URL from `VITE_API_URL`; maps network failure, 400 (message list), 429 and
    5xx to readable errors - done when its unit tests pass.
-- [ ] 4. `useHealth` (polls every 30 s, cleans up on unmount) and `HealthBadge` - done when tests cover
+- [x] 4. `useHealth` (polls every 30 s, cleans up on unmount) and `HealthBadge` - done when tests cover
    online, offline, a 503 and cleanup.
-- [ ] 5. `useTasks` (list, create, retry; a new task is added at the top; results after unmount are ignored) -
-   done when tests cover loading, empty, error, retry and create.
+- [ ] 5. `useTasks` (list, create, retry; a new task is added at the top; a slow list answer must not overwrite
+   a task created meanwhile) - done when tests cover loading, empty, error, retry, create and that race.
 - [ ] 6. `TaskForm` with validation that mirrors the API (title trimmed, 1-200; description up to 2000),
    disabled while submitting, server errors shown with the typed text kept - done when tests cover each case.
 - [ ] 7. `TaskList` with loading, empty and error (with Retry) states - done when its tests pass.
@@ -39,7 +39,8 @@ the task list with loading, empty and error states. It talks to the existing API
 
 ## Risks (performance, concurrency, security)
 - Performance: the API caps the list at 100, so no pagination; health polling is one small request per 30 s.
-- Concurrency: the submit button is disabled while sending; results arriving after unmount are ignored.
+- Concurrency: the submit button is disabled while sending; an older list answer must not overwrite a newer
+  create (React already ignores updates after unmount, so no guard code for that).
 - Security: React escapes text and `dangerouslySetInnerHTML` is never used; `VITE_` values are public, so
   no secrets; a 429 shows a clear "try again in a minute" message.
 - Deployment: production must set `CORS_ORIGIN` to the web origin or the browser blocks every call.
