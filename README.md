@@ -21,6 +21,23 @@ The API listens on `http://localhost:3000`:
 `npm run migrate:down -w api` rolls back the last migration. Migrations are plain SQL files in
 `apps/api/migrations`, run by `node-pg-migrate`. The schema is never changed automatically.
 
+### Web app
+In a second terminal, with the API running:
+
+```bash
+cp apps/web/.env.example apps/web/.env   # VITE_API_URL=http://localhost:3000 (optional locally)
+npm run dev -w web                       # http://localhost:5173
+```
+
+The page shows an API health badge (re-checked every 30 seconds), a form to create a task and the list
+of tasks, with loading, empty and error states. The dev server must stay on port 5173, because that is the
+origin the API allows by default (`CORS_ORIGIN`, see D22 in `docs/DECISIONS.md`).
+
+Two things to remember for a real deployment:
+- `VITE_API_URL` is read when the app is **built** (`npm run build -w web`), not when it runs, and it is
+  public: it ends up in the JavaScript. Never put a secret in a `VITE_` variable.
+- The API's `CORS_ORIGIN` must list the web app's exact origin, or the browser blocks every call.
+
 ### Without Docker
 Any local PostgreSQL works. Create the role and the two databases that `docker-compose.yml` creates,
 then run the same migrate and start commands:
@@ -37,6 +54,11 @@ image from `docker-compose.yml`. Use `docker compose down -v` to reset the local
 ```bash
 bash scripts/verify.sh   # lint, unit + e2e tests with coverage (80% gate), build; needs no database
 ```
+
+This runs both workspaces. The web app's tests use Vitest, jsdom and Testing Library with a mocked API
+layer (D23). To run only them: `npm test -w web`. The first release was also checked once in a real
+browser against the real API and database (create, reload, rate limit, API stopped and restarted, phone
+width); that check is not part of the test suite.
 
 The default e2e tests run on `pg-mem`, an in-process PostgreSQL emulator (see D21 in
 `docs/DECISIONS.md`). One more suite checks the real migration, constraints, index and ordering
@@ -56,5 +78,8 @@ TEST_DATABASE_URL=postgres://tasks:tasks@127.0.0.1:5432/tasks_test bash scripts/
   below PostgreSQL's `max_connections` (or add a pooler such as PgBouncer) before scaling out.
 - `GET /tasks` reads 100 rows through an index on `(created_at DESC, id DESC)`, so its cost does not
   grow with the table. The next step for large lists is cursor pagination on that same index.
+- Every open browser tab polls `GET /health` every 30 seconds, which runs one `SELECT 1`. `/health` is
+  exempt from rate limiting, so at 10x traffic this adds steady, cheap load; a longer interval or a
+  readiness endpoint that does not touch the database would reduce it.
 ### Observability
 ### AI Utilization

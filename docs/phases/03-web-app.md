@@ -30,7 +30,7 @@ the task list with loading, empty and error states. It talks to the existing API
 - [x] 8. `App` composition and styles (CSS Modules, one column, mobile-first) - done when the app renders in the tests.
 - [x] 9. Real-browser check: run the API on Postgres and the built app, create a task, see it listed, stop the
    API and see "offline" - done when screenshots show it works and found issues are fixed.
-- [ ] 10. Docs: README web section, coverage check, decisions up to date - done when verify is green.
+- [x] 10. Docs: README web section, coverage check, decisions up to date - done when verify is green.
 
 ## Tests
 - Unit/component (Vitest + Testing Library, mocked `fetch`): API wrapper errors, both hooks, the three components,
