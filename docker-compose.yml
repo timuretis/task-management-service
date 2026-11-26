@@ -1,0 +1,24 @@
+# Local database only. The API gets its own service in phase 4.
+# The password below is for local development; it must never be used anywhere else.
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: tasks
+      POSTGRES_PASSWORD: tasks
+      POSTGRES_DB: tasks
+    ports:
+      # Bound to localhost so the database is not reachable from the network.
+      - "127.0.0.1:5432:5432"
+    volumes:
+      # Postgres 18 images keep their data in a versioned folder below this path.
+      - tasks-db-data:/var/lib/postgresql
+      - ./scripts/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tasks -d tasks"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  tasks-db-data:
