@@ -152,3 +152,13 @@ Newest at the bottom. Format:
 - Alternative: keep `/health` free of the database and add a separate readiness endpoint.
 - Why / trade-off: one endpoint, as the requirements list, and a real signal for deploy checks. A database
   outage makes the API report unhealthy, which an orchestrator could treat as a reason to restart it.
+
+## D21. e2e on `pg-mem`, plus an opt-in real-Postgres suite (phase 2)
+- Decision: the default e2e suite runs the real `PostgresTasksRepository` against `pg-mem` (dev dependency),
+  so `bash scripts/verify.sh` needs no database. A small suite runs against real PostgreSQL only when
+  `TEST_DATABASE_URL` is set (name must end in `_test`) and covers the real migration, constraints, the
+  index and the list ordering. Unit tests mock the pool.
+- Alternative: e2e always on a real PostgreSQL (the `testing` skill's earlier rule), or reuse the in-memory repository.
+- Why / trade-off: fast, dependency-free verification, and this cloud session has no Docker. `pg-mem`
+  does not emulate Postgres exactly, so only the opt-in suite proves the migration and constraints; if it is
+  not run (for example, CI not set up yet), those are untested. The `testing` skill is updated to match.
