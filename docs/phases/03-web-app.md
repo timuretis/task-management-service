@@ -28,7 +28,7 @@ the task list with loading, empty and error states. It talks to the existing API
    disabled while submitting, server errors shown with the typed text kept - done when tests cover each case.
 - [x] 7. `TaskList` with loading, empty and error (with Retry) states - done when its tests pass.
 - [x] 8. `App` composition and styles (CSS Modules, one column, mobile-first) - done when the app renders in the tests.
-- [ ] 9. Real-browser check: run the API on Postgres and the built app, create a task, see it listed, stop the
+- [x] 9. Real-browser check: run the API on Postgres and the built app, create a task, see it listed, stop the
    API and see "offline" - done when screenshots show it works and found issues are fixed.
 - [ ] 10. Docs: README web section, coverage check, decisions up to date - done when verify is green.
 
