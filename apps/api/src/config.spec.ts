@@ -9,6 +9,7 @@ describe('loadConfig', () => {
       nodeEnv: 'development',
       corsOrigins: ['http://localhost:5173'],
       databaseUrl: DATABASE_URL,
+      trustProxy: 0,
     });
   });
 
@@ -24,11 +25,27 @@ describe('loadConfig', () => {
       nodeEnv: 'production',
       corsOrigins: ['https://app.example.com', 'http://localhost:5173'],
       databaseUrl: 'postgresql://app:secret@db:5432/tasks',
+      trustProxy: 0,
     });
   });
 
   it.each(['abc', '0', '70000', '3.5', '3e3', '0x10'])('rejects PORT=%s', (port) => {
     expect(() => loadConfig({ DATABASE_URL, PORT: port })).toThrow('PORT');
+  });
+
+  describe('TRUST_PROXY', () => {
+    it('is off when unset or empty', () => {
+      expect(loadConfig({ DATABASE_URL }).trustProxy).toBe(0);
+      expect(loadConfig({ DATABASE_URL, TRUST_PROXY: '' }).trustProxy).toBe(0);
+    });
+
+    it('reads the number of proxy hops', () => {
+      expect(loadConfig({ DATABASE_URL, TRUST_PROXY: '1' }).trustProxy).toBe(1);
+    });
+
+    it.each(['true', '-1', '1.5', '1e1', '6', 'loopback'])('rejects TRUST_PROXY=%s', (value) => {
+      expect(() => loadConfig({ DATABASE_URL, TRUST_PROXY: value })).toThrow('TRUST_PROXY');
+    });
   });
 
   it('rejects an unknown NODE_ENV', () => {

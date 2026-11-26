@@ -5,11 +5,14 @@ export interface AppConfig {
   nodeEnv: NodeEnv;
   corsOrigins: string[];
   databaseUrl: string;
+  /** Number of reverse proxies in front of the API whose X-Forwarded-For is believed. 0 = none. */
+  trustProxy: number;
 }
 
 const NODE_ENVS: NodeEnv[] = ['development', 'production', 'test'];
 // Vite's default dev server; only used outside production.
 const DEV_CORS_ORIGIN = 'http://localhost:5173';
+const MAX_TRUST_PROXY = 5;
 
 function parsePort(value: string | undefined): number {
   const port = Number(value ?? 3000);
@@ -45,6 +48,20 @@ function parseCorsOrigins(value: string | undefined, nodeEnv: NodeEnv): string[]
   return value.split(',').map((origin) => parseOrigin(origin.trim()));
 }
 
+// Behind Caddy the socket address is always the proxy's, so the rate limit would count every user as
+// one client. Trusting too many hops is worse: a client could forge X-Forwarded-For and dodge the limit.
+// So the default is 0 and the operator names the exact number of proxies.
+function parseTrustProxy(value: string | undefined): number {
+  if (value === undefined || value === '') return 0;
+  const hops = Number(value);
+  if (!/^\d+$/.test(value) || hops > MAX_TRUST_PROXY) {
+    throw new Error(
+      `TRUST_PROXY must be an integer between 0 and ${MAX_TRUST_PROXY}, got "${value}"`,
+    );
+  }
+  return hops;
+}
+
 // The URL holds the password, so no error below repeats its value.
 function parseDatabaseUrl(value: string | undefined): string {
   if (!value) throw new Error('DATABASE_URL is required');
@@ -67,5 +84,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     nodeEnv,
     corsOrigins: parseCorsOrigins(env.CORS_ORIGIN, nodeEnv),
     databaseUrl: parseDatabaseUrl(env.DATABASE_URL),
+    trustProxy: parseTrustProxy(env.TRUST_PROXY),
   };
 }

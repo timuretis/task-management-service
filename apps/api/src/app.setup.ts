@@ -1,4 +1,5 @@
 import { INestApplication } from '@nestjs/common';
+import type { Application } from 'express';
 import helmet from 'helmet';
 import { AppConfig } from './config';
 
@@ -7,6 +8,8 @@ import { AppConfig } from './config';
  * The JSON body limit is Express's default of 100 KB, which is what we want (see D8).
  */
 export function configureApp(app: INestApplication, config: AppConfig): void {
+  // Express derives req.ip (used by the rate limit) from X-Forwarded-For only when told how many proxies to trust.
+  (app.getHttpAdapter().getInstance() as Application).set('trust proxy', config.trustProxy);
   app.use(helmet());
   // Only the web app's origin(s) may call the API from a browser; there is no wildcard.
   app.enableCors({ origin: config.corsOrigins });
