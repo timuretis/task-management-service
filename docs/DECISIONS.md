@@ -185,3 +185,11 @@ Newest at the bottom. Format:
 - Alternative: add `msw` to mock the network at a lower level.
 - Why / trade-off: fewer dependencies and less to explain; the API wrapper is small enough for a plain mock.
   jsdom is not a real browser, so the browser check covers what it cannot.
+
+## D24. Two container images: the API, and the web app on nginx (phase 4)
+- Decision: a multi-stage image for the API (build stage with dev dependencies, runtime stage with production
+  dependencies only) and a multi-stage image for the web app (Vite build, then static files served by a
+  non-root nginx). `VITE_API_URL` is a build argument. `docker-compose.yml` grows to `db`, `api` and `web`.
+- Alternative: one image where the API also serves the built web files, or hosting the web files on S3.
+- Why / trade-off: one job per image, small runtime images and a fit with D22 (separate origins, CORS).
+  `VITE_API_URL` is baked in at build time, so each environment needs its own web image build.
