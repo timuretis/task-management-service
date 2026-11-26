@@ -15,7 +15,12 @@ function upSql(file: string): string {
  * A fresh in-process Postgres emulator with the real migrations applied (D21).
  * It is not exact Postgres: the opt-in suite against a real database covers the differences.
  */
-export function createPgMemPool(): Pool {
+export interface PgMemDatabase {
+  /** A new pool on the same data. Each app closes its own pool on shutdown. */
+  createPool(): Pool;
+}
+
+export function createPgMemDatabase(): PgMemDatabase {
   const db = newDb();
   // pg-mem lacks btrim() and length(), which the title CHECK uses. JS trim() also strips tabs and
   // newlines, which real btrim() keeps, so only the opt-in real-Postgres suite proves that detail.
@@ -37,5 +42,10 @@ export function createPgMemPool(): Pool {
     db.public.none(upSql(file));
   }
   const { Pool: PgMemPool } = db.adapters.createPg();
-  return new PgMemPool();
+  return { createPool: () => new PgMemPool() };
+}
+
+/** Shortcut for a test that needs one app on its own fresh database. */
+export function createPgMemPool(): Pool {
+  return createPgMemDatabase().createPool();
 }
