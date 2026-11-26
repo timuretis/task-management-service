@@ -37,7 +37,7 @@ Terraform provisions one EC2 instance that runs the app over HTTPS at `https://t
    only send and read SSM commands on the tagged instance - done when `validate` passes.
 - [x] 6. First-boot script (Docker, Compose, Git, clone to `/opt/app`, password `.env`) and the deploy script
    (checkout SHA, pull, `up -d --wait`) - done when both pass `bash -n` and a dry run in a local container.
-- [ ] 7. CI: Terraform in `verify`; production config checks in `docker`; the `deploy` job (push images, OIDC, SSM
+- [x] 7. CI: Terraform in `verify`; production config checks in `docker`; the `deploy` job (push images, OIDC, SSM
    deploy and wait, read-only smoke test) with per-job permissions - done when the workflow is green on the PR and
    `deploy` is skipped there.
 - [ ] 8. Docs: `docs/aws-setup.md` (tools, AWS sign-in, `apply`, DNS records, GitHub variables, GHCR visibility, first
