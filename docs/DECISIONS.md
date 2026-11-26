@@ -170,3 +170,18 @@ Newest at the bottom. Format:
 - Why / trade-off: fast, dependency-free verification, and this cloud session has no Docker. `pg-mem`
   does not emulate Postgres exactly, so only the opt-in suite proves the migration and constraints; if it is
   not run (for example, CI not set up yet), those are untested. The `testing` skill is updated to match.
+
+## D22. The web app calls the API by full URL, over CORS (phase 3)
+- Decision: the React app reads the API base URL from `VITE_API_URL` and calls it directly; the API's CORS
+  allow-list (D11) names the web origin (`http://localhost:5173` in development).
+- Alternative: same origin, through a Vite dev proxy and a reverse proxy in production.
+- Why / trade-off: uses the CORS setup already built and keeps hosting open for phase 5. Production must set
+  `CORS_ORIGIN` to the web app's origin or the browser blocks every call. `VITE_` values are public, so no secret goes there.
+
+## D23. Web stack: Vite, React 19 and Vitest with a mocked `fetch` (phase 3)
+- Decision: `apps/web` uses Vite, React and TypeScript; production dependencies are only `react` and
+  `react-dom`. Tests use Vitest, jsdom and Testing Library with a hand-mocked `fetch`, and the app is also run
+  once against the real API in a real browser (Playwright) to catch CORS and layout problems.
+- Alternative: add `msw` to mock the network at a lower level.
+- Why / trade-off: fewer dependencies and less to explain; the API wrapper is small enough for a plain mock.
+  jsdom is not a real browser, so the browser check covers what it cannot.
