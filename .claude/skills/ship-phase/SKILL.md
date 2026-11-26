@@ -1,6 +1,6 @@
 ---
 name: ship-phase
-description: Finish a development phase of task-management-service - verify, independent review, docs, push and open the PR. Never merges.
+description: Finish a development phase of task-management-service - verify, independent review, docs, push and open the PR. Never merges; `/merge-pr` does that after the user's review.
 disable-model-invocation: true
 ---
 
@@ -19,4 +19,5 @@ Run these steps in order and stop on any failure.
    - Title: `Phase NN: <name>`
    - Body: what was built, decisions with their main alternative, trade-offs, how to test,
      review summary, and coverage numbers.
-5. Stop. Give the user the PR link. **Do not merge** - merging is the user's call.
+5. Stop. Give the user the PR link and tell them: after their peer review, run `/merge-pr`.
+   **Do not merge** - merging is the user's call.
