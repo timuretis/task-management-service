@@ -26,7 +26,7 @@ the task list with loading, empty and error states. It talks to the existing API
    a task created meanwhile) - done when tests cover loading, empty, error, retry, create and that race.
 - [x] 6. `TaskForm` with validation that mirrors the API (title trimmed, 1-200; description up to 2000),
    disabled while submitting, server errors shown with the typed text kept - done when tests cover each case.
-- [ ] 7. `TaskList` with loading, empty and error (with Retry) states - done when its tests pass.
+- [x] 7. `TaskList` with loading, empty and error (with Retry) states - done when its tests pass.
 - [ ] 8. `App` composition and styles (CSS Modules, one column, mobile-first) - done when the app renders in the tests.
 - [ ] 9. Real-browser check: run the API on Postgres and the built app, create a task, see it listed, stop the
    API and see "offline" - done when screenshots show it works and found issues are fixed.

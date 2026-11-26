@@ -1,0 +1,45 @@
+.item {
+  padding: 0.9rem 1rem;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.05rem;
+  /* Long words must wrap, or a long title would make the whole page scroll sideways. */
+  overflow-wrap: anywhere;
+}
+
+.status {
+  flex-shrink: 0;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: #e7f0ff;
+  color: #1a4fb0;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.description {
+  margin: 0.5rem 0 0;
+  color: #495057;
+  /* Keeps the line breaks the person typed. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.time {
+  display: block;
+  margin-top: 0.5rem;
+  color: #868e96;
+  font-size: 0.8rem;
+}
