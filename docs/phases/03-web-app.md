@@ -18,7 +18,7 @@ the task list with loading, empty and error states. It talks to the existing API
 - [x] 1. Correct the README note about `postgres:18` (verified by the author) - done, first commit on the branch.
 - [x] 2. Scaffold `apps/web` (Vite, React, TypeScript), ESLint with the React hooks rules, Prettier, Vitest with
    an 80% coverage gate, `.env.example` - done when `bash scripts/verify.sh` passes on the empty app.
-- [ ] 3. Typed API wrapper: base URL from `VITE_API_URL`; maps network failure, 400 (message list), 429 and
+- [x] 3. Typed API wrapper: base URL from `VITE_API_URL`; maps network failure, 400 (message list), 429 and
    5xx to readable errors - done when its unit tests pass.
 - [ ] 4. `useHealth` (polls every 30 s, cleans up on unmount) and `HealthBadge` - done when tests cover
    online, offline, a 503 and cleanup.
