@@ -36,6 +36,7 @@ origin the API allows by default (`CORS_ORIGIN`, see D22 in `docs/DECISIONS.md`)
 Two things to remember for a real deployment:
 - `VITE_API_URL` is read when the app is **built** (`npm run build -w web`), not when it runs, and it is
   public: it ends up in the JavaScript. Never put a secret in a `VITE_` variable.
+  A production build without it shows "The app is not configured" instead of calling `localhost`.
 - The API's `CORS_ORIGIN` must list the web app's exact origin, or the browser blocks every call.
 
 ### Without Docker

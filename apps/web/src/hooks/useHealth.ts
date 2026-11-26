@@ -18,7 +18,8 @@ export function useHealth(): { data: Health | null; isLoading: boolean } {
       } catch {
         result = null;
       }
-      // An answer that arrives after unmount is harmless: React ignores updates to a gone component.
+      // An answer after unmount is harmless: React ignores updates to a gone component. Answers cannot
+      // arrive out of order, because the request timeout (10 s) is shorter than the poll interval.
       setData(result);
       setIsLoading(false);
     }

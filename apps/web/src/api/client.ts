@@ -17,15 +17,24 @@ export class ApiError extends Error {
 
 // Read on each call (not at import time) so tests can change it.
 function apiUrl(path: string): string {
-  const base = import.meta.env.VITE_API_URL ?? DEFAULT_API_URL;
-  return `${base.replace(/\/+$/, '')}${path}`;
+  const configured = import.meta.env.VITE_API_URL;
+  // A production build without it would quietly call localhost and fail with no clue why.
+  if (!configured && import.meta.env.PROD) {
+    throw new ApiError('The app is not configured: VITE_API_URL was not set when it was built.');
+  }
+  return `${(configured || DEFAULT_API_URL).replace(/\/+$/, '')}${path}`;
 }
 
 // The API answers 400 with `message` as a list of problems, or as one string.
+// Only text is accepted: a proxy could send an object, and React cannot render an object as text.
 function badRequestMessage(body: unknown, status: number): string {
-  const message = (body as { message?: string | string[] } | null)?.message;
-  if (Array.isArray(message)) return message.join('. ');
-  return message ?? `Request failed (${status})`;
+  const message = (body as { message?: unknown } | null)?.message;
+  if (typeof message === 'string') return message;
+  if (Array.isArray(message)) {
+    const texts = message.filter((item): item is string => typeof item === 'string');
+    if (texts.length > 0) return texts.join('. ');
+  }
+  return `Request failed (${status})`;
 }
 
 async function toApiError(response: Response): Promise<ApiError> {
@@ -38,9 +47,10 @@ async function toApiError(response: Response): Promise<ApiError> {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const url = apiUrl(path);
   let response: Response;
   try {
-    response = await fetch(apiUrl(path), {
+    response = await fetch(url, {
       ...init,
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });

@@ -74,6 +74,21 @@ describe('useTasks', () => {
     expect(result.current.error).toBeNull();
   });
 
+  it('keeps a task created while the list failed to load, when Retry succeeds', async () => {
+    getTasksMock.mockRejectedValueOnce(new ApiError('down'));
+    createTaskMock.mockResolvedValue(task('3', 'created meanwhile'));
+    const { result } = renderHook(() => useTasks());
+    await waitFor(() => expect(result.current.error).toBe('down'));
+    await act(() => result.current.createTask({ title: 'created meanwhile' }));
+
+    getTasksMock.mockResolvedValueOnce([task('2', 'b'), task('1', 'a')]);
+    act(() => result.current.reload());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.tasks.map((t) => t.title)).toEqual(['created meanwhile', 'b', 'a']);
+    expect(result.current.error).toBeNull();
+  });
+
   it('adds a created task at the top', async () => {
     getTasksMock.mockResolvedValue([task('1', 'old')]);
     createTaskMock.mockResolvedValue(task('2', 'new'));

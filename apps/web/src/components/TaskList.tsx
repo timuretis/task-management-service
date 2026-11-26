@@ -14,7 +14,7 @@ export function TaskList({ tasks, isLoading, error, onRetry }: TaskListProps) {
   const isEmpty = !isLoading && !error && tasks.length === 0;
 
   return (
-    <section aria-label="Tasks">
+    <div>
       {isLoading && <p role="status">Loading tasks…</p>}
       {error && (
         <div role="alert" className={styles.error}>
@@ -33,6 +33,6 @@ export function TaskList({ tasks, isLoading, error, onRetry }: TaskListProps) {
           ))}
         </ul>
       )}
-    </section>
+    </div>
   );
 }

@@ -5,6 +5,8 @@ export default defineConfig({
   plugins: [react()],
   // The API allows this origin by default (CORS_ORIGIN), so the port must not change silently.
   server: { port: 5173, strictPort: true },
+  // `vite preview` (the built app) uses its own port setting; keep it on the allowed origin too.
+  preview: { port: 5173, strictPort: true },
   test: {
     environment: 'jsdom',
     // globals gives Testing Library its automatic cleanup between tests.

@@ -52,6 +52,17 @@ describe('API client', () => {
       expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:3000/tasks');
     });
 
+    it('refuses to guess the API address in a production build', async () => {
+      vi.stubEnv('PROD', true);
+      vi.stubEnv('VITE_API_URL', undefined as unknown as string);
+
+      const error = await getTasks().catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(ApiError);
+      expect((error as ApiError).message).toContain('VITE_API_URL');
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
     it('posts a new task as JSON and returns the stored task', async () => {
       fetchMock.mockResolvedValue(reply(201, task));
 
@@ -102,6 +113,23 @@ describe('API client', () => {
       fetchMock.mockResolvedValue(reply(413, { message: 'request entity too large' }));
 
       expect((await failure(getTasks())).message).toBe('request entity too large');
+    });
+
+    it.each([
+      ['an object', { message: { detail: 'x' } }],
+      ['a number', { message: 42 }],
+      ['an empty list', { message: [] }],
+      ['no message', { error: 'Bad Request' }],
+    ])('does not use %s as the error text', async (_name, body) => {
+      fetchMock.mockResolvedValue(reply(400, body));
+
+      expect((await failure(getTasks())).message).toBe('Request failed (400)');
+    });
+
+    it('keeps only the text items of a mixed message list', async () => {
+      fetchMock.mockResolvedValue(reply(400, { message: ['title is bad', { x: 1 }, 7] }));
+
+      expect((await failure(getTasks())).message).toBe('title is bad');
     });
 
     it('falls back to the status code when the error body is not JSON', async () => {
