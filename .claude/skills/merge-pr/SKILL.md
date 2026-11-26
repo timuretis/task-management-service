@@ -1,6 +1,6 @@
 ---
 name: merge-pr
-description: Merge an approved task-management-service PR into main and delete its branch on GitHub. Use only after the user's own peer review, when they invoke /merge-pr.
+description: Merge an approved task-management-service PR into main and confirm GitHub deleted its branch. Use only after the user's own peer review, when they invoke /merge-pr.
 disable-model-invocation: true
 ---
 
@@ -21,11 +21,11 @@ the peer review; this skill does the mechanical part. Stop and report on any fai
    commit title `<PR title> (#N)`, and `expectedHeadSha` set to the SHA you just read, so
    nothing pushed after the review slips in. The merge hook asks the user to approve; that
    prompt is the final confirmation. If they decline, stop; do not retry or work around it.
-5. **Delete the branch on GitHub**, only after the merge succeeded, only if the head is not
-   `main`/`master`, and only if the PR is from this repository. The GitHub tools have no
-   delete-branch call, so run `git push origin --delete <branch>` (one command, nothing else in
-   it, because the branch hook scans the whole command text). Then check with `list_branches`
-   that it is gone. If the delete fails, say so and give the user the branch name to delete.
+5. **Check the branch is gone.** The repo setting "Automatically delete head branches" makes
+   GitHub delete the head branch when the PR merges, so do not delete it yourself (the session's
+   git access gets a 403 on deletes). Wait a few seconds, then check with `list_branches`. If the
+   head branch is still listed (setting off, or a PR from a fork), say so and give the user the
+   branch name to delete by hand. Never delete `main`/`master`.
 6. **Clean up locally**: `git fetch origin main`, switch to `main`, `git pull --ff-only`, and
    delete the local phase branch with `git branch -D <branch>` (a squash merge makes `-d`
    refuse). Skip this where the session is pinned to its own branch.
