@@ -118,3 +118,12 @@ Newest at the bottom. Format:
   decision. One more skill to maintain.
   Branch deletion is left to the repo setting "Automatically delete head branches": the GitHub tools
   have no delete call and the cloud session's git access is refused with a 403 when it tries.
+
+## D17. `pg` with plain SQL and `node-pg-migrate` (phase 2)
+- Decision: a `PostgresTasksRepository` using the `pg` driver with parameterized SQL; versioned SQL
+  migrations with `node-pg-migrate` 7 (CommonJS). `pg` and `node-pg-migrate` are production dependencies
+  because migrations run at deploy time.
+- Alternative: TypeORM (`@nestjs/typeorm` 11), or Drizzle.
+- Why / trade-off: two queries do not justify an ORM; every query and index is visible SQL that is easy to
+  explain. Rows are mapped by hand and the code grows less gracefully if the schema gets large.
+  `node-pg-migrate` is pinned to 7.x because 8 and later are ESM-only (same reason as D12 and D13).
