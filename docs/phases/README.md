@@ -1,6 +1,6 @@
 # Phases
 
-Each phase: `/brainstorm` -> `/to-spec` -> small commits -> `/ship-phase` -> PR -> you merge.
+Each phase: `/brainstorm` -> `/to-spec` -> small commits -> `/ship-phase` -> PR -> your review -> `/merge-pr`.
 Each phase gets a spec file here (`NN-<slug>.md`), written by `/to-spec`.
 
 Proposed roadmap (one working day). The order and scope are confirmed in each phase's brainstorm.

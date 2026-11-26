@@ -109,3 +109,10 @@ Newest at the bottom. Format:
 - Alternative: always set `trust proxy` now.
 - Why / trade-off: with no proxy in front, a client could fake that header and dodge the per-IP rate limit.
   Until phase 5 nothing runs behind a proxy, so the limit is accurate where we run today.
+
+## D16. Merging is a user-invoked skill, `/merge-pr` (phase 1)
+- Decision: after the author's own review, `/merge-pr` squash-merges the PR into `main` (pinned to the
+  reviewed commit), deletes the branch on GitHub and updates local `main`. The merge hook still asks first.
+- Alternative: the author merges by hand in GitHub, or Claude merges on its own.
+- Why / trade-off: removes repetitive steps and forgotten branch cleanup, while the author keeps the
+  decision. One more skill to maintain; the branch is deleted through git because the GitHub tools have no such call.
