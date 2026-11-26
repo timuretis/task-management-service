@@ -117,6 +117,9 @@ resource "aws_instance" "app" {
   vpc_security_group_ids = [aws_security_group.app.id]
   iam_instance_profile   = aws_iam_instance_profile.instance.name
 
+  # Installs Docker and clones the repo on first boot; it does not start the app (D33).
+  user_data = file("${path.module}/../scripts/first-boot.sh")
+
   # IMDSv2 only, one network hop: a container (one hop further away) cannot read the
   # instance role's credentials from the metadata service (D35).
   metadata_options {

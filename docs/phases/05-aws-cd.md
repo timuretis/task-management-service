@@ -35,7 +35,7 @@ Terraform provisions one EC2 instance that runs the app over HTTPS at `https://t
    the DNS records to add and the role ARN - done when `fmt` and `validate` pass in `verify.sh`.
 - [x] 5. Terraform for CI access: GitHub OIDC provider and a deploy role that trusts only this repo's `main` and may
    only send and read SSM commands on the tagged instance - done when `validate` passes.
-- [ ] 6. First-boot script (Docker, Compose, Git, clone to `/opt/app`, password `.env`) and the deploy script
+- [x] 6. First-boot script (Docker, Compose, Git, clone to `/opt/app`, password `.env`) and the deploy script
    (checkout SHA, pull, `up -d --wait`) - done when both pass `bash -n` and a dry run in a local container.
 - [ ] 7. CI: Terraform in `verify`; production config checks in `docker`; the `deploy` job (push images, OIDC, SSM
    deploy and wait, read-only smoke test) with per-job permissions - done when the workflow is green on the PR and
@@ -55,6 +55,8 @@ Terraform provisions one EC2 instance that runs the app over HTTPS at `https://t
 - Order of the first deploy: `apply` (from the branch), DNS records, GitHub variables, then merge. The first boot
   does not start the app; the first deploy does. The live check only happens after the merge, so fixes may need a
   follow-up PR.
+- The repo must be public before the first boot: the instance clones it without credentials (D33). The author
+  flips it in GitHub settings before `apply`.
 - GHCR: a first push may create private packages; if so the author makes them public once (confirmed during the build).
 - Security: the deploy role is scoped to one repo, one branch and one instance; IMDSv2 hop limit 1 keeps credentials
   out of containers; CSP must list the API name; no secret in Git, GitHub or Terraform state.
