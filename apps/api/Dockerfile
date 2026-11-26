@@ -8,7 +8,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/
 RUN npm ci --workspace api
-COPY apps/api/ apps/api/
+# Only what tsc needs, so editing a migration or a lint config does not rerun the build.
+COPY apps/api/tsconfig.json apps/api/tsconfig.build.json apps/api/
+COPY apps/api/src apps/api/src
 RUN npm run build --workspace api
 
 # --- Runtime stage: production dependencies and compiled code only.
