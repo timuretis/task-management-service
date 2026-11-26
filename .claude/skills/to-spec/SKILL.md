@@ -16,7 +16,7 @@ truly missing.
 
 ```markdown
 # Phase NN - <name>
-Branch: `phase/NN-<slug>`
+Branch: `phase-N-<slug>` (e.g. `phase-2-database`)
 
 ## Goal
 One or two sentences: what works at the end of this phase.
@@ -35,5 +35,5 @@ One or two sentences: what works at the end of this phase.
 ```
 
 3. No file paths or code beyond names of modules and endpoints; code changes fast.
-4. Next: suggest creating the branch and starting task 1. Building is a fresh step,
+4. Next: create the branch (see AGENTS.md naming), then start task 1. Building is a fresh step,
    so it can run on the default (Sonnet) model.

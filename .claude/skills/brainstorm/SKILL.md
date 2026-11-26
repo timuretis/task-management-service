@@ -7,7 +7,7 @@ model: opus
 # Brainstorm
 
 1. Check the git state in one line (branch, uncommitted changes). If not on an up-to-date
-   phase branch, say so and let the user decide.
+   phase branch (`phase-N-<slug>`, from the latest `main`), say so and let the user decide.
 2. Read `docs/requirements.md`, `docs/DECISIONS.md` and the specs in `docs/phases/`.
    Look facts up in the repo instead of asking.
 3. Interview the user **one question at a time**. Open each with your recommended answer

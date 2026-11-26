@@ -23,7 +23,9 @@ The root `package.json` uses npm workspaces.
 
 ## Workflow
 1. Each phase: `/brainstorm` -> `/to-spec` -> build in small commits -> `/ship-phase` -> your review -> `/merge-pr`.
-2. One branch and one PR per phase. Never commit to `main`/`master`; never merge a PR on your own (only `/merge-pr`, when the user invokes it after their review).
+2. One branch and one PR per phase. Name it `phase-<N>-<slug>` (e.g. `phase-2-database`); any
+   other change gets a short kebab-case name (e.g. `merge-pr-skill`). Always branch from an
+   up-to-date `main`. If the environment pins a different branch name, ask the user first. Never commit to `main`/`master`; never merge a PR on your own (only `/merge-pr`, when the user invokes it after their review).
 3. Independent review by the `code-reviewer` subagent once per phase, before the PR.
 
 ## Rules
