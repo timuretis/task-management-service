@@ -40,7 +40,7 @@ Terraform provisions one EC2 instance that runs the app over HTTPS at `https://t
 - [x] 7. CI: Terraform in `verify`; production config checks in `docker`; the `deploy` job (push images, OIDC, SSM
    deploy and wait, read-only smoke test) with per-job permissions - done when the workflow is green on the PR and
    `deploy` is skipped there.
-- [ ] 8. Docs: `docs/aws-setup.md` (tools, AWS sign-in, `apply`, DNS records, GitHub variables, GHCR visibility, first
+- [x] 8. Docs: `docs/aws-setup.md` (tools, AWS sign-in, `apply`, DNS records, GitHub variables, GHCR visibility, first
    deploy order, SSH tunnel, logs, rollback, `destroy`), README Deployment section - done when a newcomer could follow it.
 - [ ] 9. Live check after the author's `apply` and the merge: deploy green, both HTTPS names answer, HSTS and CSP
    present, SSH tunnel to Postgres, logs in CloudWatch, rollback to the previous SHA - results noted here.
