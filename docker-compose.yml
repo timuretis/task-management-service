@@ -1,5 +1,7 @@
-# Local database only. The API gets its own service in phase 4.
-# The password below is for local development; it must never be used anywhere else.
+# The whole app from production images: database, migrations, API and web app.
+#   docker compose up --build --wait   then open http://localhost:8080
+# Passwords below are for local development only; they must never be used anywhere else.
+# Every port is bound to 127.0.0.1, so nothing here is reachable from the network.
 services:
   db:
     image: postgres:18
@@ -8,7 +10,7 @@ services:
       POSTGRES_PASSWORD: tasks
       POSTGRES_DB: tasks
     ports:
-      # Bound to localhost so the database is not reachable from the network.
+      # Published so `npm run start` and the tests on the host can use this database too.
       - "127.0.0.1:5432:5432"
     volumes:
       # Postgres 18 images keep their data in a versioned folder below this path.
@@ -19,6 +21,52 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  # Runs the migrations once and exits (D26). Same image as the API, different command.
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: task-management-api
+    command: ["node", "scripts/migrate.js", "up"]
+    environment:
+      DATABASE_URL: postgres://tasks:tasks@db:5432/tasks
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: task-management-api
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_URL: postgres://tasks:tasks@db:5432/tasks
+      # The browser loads the web app from this origin, so the API must allow it (D22).
+      CORS_ORIGIN: http://localhost:8080
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      # The API never migrates itself; it starts only on an up-to-date schema.
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # Baked into the JavaScript at build time; the browser calls the API at this URL.
+        VITE_API_URL: http://localhost:3000
+    image: task-management-web
+    ports:
+      - "127.0.0.1:8080:8080"
+    restart: unless-stopped
 
 volumes:
   tasks-db-data:
