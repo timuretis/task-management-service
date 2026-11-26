@@ -25,7 +25,7 @@ Terraform provisions one EC2 instance that runs the app over HTTPS at `https://t
 ## Tasks (in order, each one a small commit)
 - [x] 1. API `trust proxy` from an environment variable (off by default, one hop in production) - done when unit tests
    cover parsing and e2e tests show the rate limit keys on `X-Forwarded-For` only when it is on.
-- [ ] 2. Production compose file and Caddyfile: GHCR images by `IMAGE_TAG`, `db` on loopback only, password from `.env`,
+- [x] 2. Production compose file and Caddyfile: GHCR images by `IMAGE_TAG`, `db` on loopback only, password from `.env`,
    Caddy on 80/443 with a certificate volume, HSTS and CSP, `awslogs` for every service - done when
    `docker compose config` and `caddy validate` pass.
 - [ ] 3. Smoke test read-only mode (health, web page, CORS; no task created) - done when it passes against the local

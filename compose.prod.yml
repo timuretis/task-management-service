@@ -1,0 +1,88 @@
+# Production stack on the EC2 instance (D27): the same services as docker-compose.yml, but from images CI
+# pushed to GHCR (D30), behind Caddy for HTTPS (D28), with logs in CloudWatch (D36).
+#   IMAGE_TAG=<commit sha> docker compose -f compose.prod.yml up -d --wait
+# POSTGRES_PASSWORD comes from the `.env` file next to this one; the first-boot script creates it (D32).
+
+x-logging: &logging
+  driver: awslogs
+  options:
+    awslogs-region: eu-central-1
+    # Created by Terraform; the instance role may write to this group only.
+    awslogs-group: /task-management-service
+    # One stream per service, named after the container.
+    tag: "{{.Name}}"
+
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: tasks
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: tasks
+    ports:
+      # Loopback only: the author reaches it from a laptop through an SSH tunnel (D32).
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - tasks-db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tasks -d tasks"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    logging: *logging
+
+  # Runs the migrations once and exits (D26).
+  migrate:
+    image: ghcr.io/timuretis/task-management-api:${IMAGE_TAG:?set IMAGE_TAG to the commit SHA to deploy}
+    command: ["node", "scripts/migrate.js", "up"]
+    environment:
+      # The first-boot script makes the password hex, so it is safe inside a URL.
+      DATABASE_URL: postgres://tasks:${POSTGRES_PASSWORD}@db:5432/tasks
+    depends_on:
+      db:
+        condition: service_healthy
+    logging: *logging
+
+  api:
+    image: ghcr.io/timuretis/task-management-api:${IMAGE_TAG}
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_URL: postgres://tasks:${POSTGRES_PASSWORD}@db:5432/tasks
+      CORS_ORIGIN: https://tasks.timur.co.il
+      # Exactly one proxy (Caddy) sits in front, so the rate limit sees real client IPs.
+      TRUST_PROXY: "1"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    logging: *logging
+
+  web:
+    image: ghcr.io/timuretis/task-management-web:${IMAGE_TAG}
+    restart: unless-stopped
+    logging: *logging
+
+  caddy:
+    image: caddy:2.11-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificates and the Let's Encrypt account; losing them on a redeploy would risk its rate limits.
+      - caddy-data:/data
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    restart: unless-stopped
+    logging: *logging
+
+volumes:
+  tasks-db-data:
+  caddy-data:

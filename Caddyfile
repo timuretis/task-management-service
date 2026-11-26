@@ -1,0 +1,19 @@
+# HTTPS for the two public names (D28). Caddy gets and renews Let's Encrypt certificates by itself and
+# redirects port 80 to HTTPS. The A records for both names must point at the instance before the first start.
+
+# Web app. The CSP lets the page call the API name and nothing else (D35); keep it in step with that name.
+tasks.timur.co.il {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		Content-Security-Policy "default-src 'self'; connect-src 'self' https://tasks-api.timur.co.il; frame-ancestors 'none'; object-src 'none'; base-uri 'self'"
+	}
+	reverse_proxy web:8080
+}
+
+# API. Caddy adds X-Forwarded-For, which the API trusts for exactly one hop (TRUST_PROXY=1).
+tasks-api.timur.co.il {
+	encode zstd gzip
+	header Strict-Transport-Security "max-age=31536000"
+	reverse_proxy api:3000
+}
