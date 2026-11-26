@@ -17,25 +17,25 @@ contract from phase 1 does not change.
 - Default e2e on `pg-mem`, plus an opt-in suite on real Postgres when `TEST_DATABASE_URL` is set ([D21](../DECISIONS.md))
 
 ## Tasks (in order, each one a small commit)
-1. Add dependencies (`pg`, `node-pg-migrate` 7; dev: `@types/pg`, `pg-mem`) and a required `DATABASE_URL`
+- [x] 1. Add dependencies (`pg`, `node-pg-migrate` 7; dev: `@types/pg`, `pg-mem`) and a required `DATABASE_URL`
    in config and `.env.example` - done when config unit tests cover a missing or invalid URL.
-2. Migration 001 (`tasks` table, constraints, list index) and `migrate` / `migrate:down` scripts -
+- [x] 2. Migration 001 (`tasks` table, constraints, list index) and `migrate` / `migrate:down` scripts -
    done when it applies, rolls back and applies again on a local Postgres.
-3. `docker-compose.yml` with a `db` service (`postgres:18`, volume, health check, development and `_test`
+- [x] 3. `docker-compose.yml` with a `db` service (`postgres:18`, volume, health check, development and `_test`
    databases, local-only port) - done when the file is valid; the first real run is on the author's machine.
-4. Database module with the `Pool` provider, closed on shutdown - done when its unit tests pass.
-5. `PostgresTasksRepository` (create, newest first with a limit) - done when unit tests with a mocked pool
+- [x] 4. Database module with the `Pool` provider, closed on shutdown - done when its unit tests pass.
+- [x] 5. `PostgresTasksRepository` (create, newest first with a limit) - done when unit tests with a mocked pool
    check the SQL, the parameters, the row mapping and error propagation.
-6. Wire `TasksModule` to the Postgres repository; remove the in-memory repository if nothing uses it.
+- [x] 6. Wire `TasksModule` to the Postgres repository; remove the in-memory repository if nothing uses it.
    The app cannot start without a pool, so the minimal `pg-mem` e2e harness (migrations applied to a fresh
    emulator per app) lands here too - done when the existing e2e cases pass unchanged.
-7. `GET /health` checks the database: 200 when it answers, 503 `{ status: "error" }` when it does not -
+- [x] 7. `GET /health` checks the database: 200 when it answers, 503 `{ status: "error" }` when it does not -
    done when unit and e2e tests pass.
-8. Extra `pg-mem` e2e cases: created tasks survive an app restart, and a database failure gives a safe 500 -
+- [x] 8. Extra `pg-mem` e2e cases: created tasks survive an app restart, and a database failure gives a safe 500 -
    done when `bash scripts/verify.sh` passes with no database running.
-9. Opt-in real-Postgres suite (skipped without `TEST_DATABASE_URL`, database name must end in `_test`) -
+- [x] 9. Opt-in real-Postgres suite (skipped without `TEST_DATABASE_URL`, database name must end in `_test`) -
    done when it passes against the local Postgres 16 here.
-10. Docs: README (compose, migrations, opt-in suite, Postgres 18 not run here) and a coverage check -
+- [x] 10. Docs: README (compose, migrations, opt-in suite, Postgres 18 not run here) and a coverage check -
     done when coverage is 80%+ and `bash scripts/verify.sh` is green.
 
 ## Tests
