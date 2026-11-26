@@ -21,7 +21,7 @@ if compgen -G "infra/*.tf" >/dev/null; then
   if command -v terraform >/dev/null; then
     tf() { terraform -chdir=infra "$@"; }
   else
-    tf() { docker run --rm -v "$PWD/infra:/infra" -w /infra hashicorp/terraform:1.14 "$@"; }
+    tf() { docker run --rm -v "$PWD:/repo" -w /repo/infra hashicorp/terraform:1.14 "$@"; }
   fi
   tf fmt -check -recursive
   tf init -backend=false -input=false
