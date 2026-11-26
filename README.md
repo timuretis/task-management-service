@@ -44,7 +44,7 @@ The production images, with no Node needed on your machine:
 
 ```bash
 docker compose up --build --wait   # database, migrations, API and web app; waits until all are healthy
-bash scripts/smoke-test.sh         # optional: health, web page, CORS, create and list a task
+bash scripts/smoke-test.sh         # optional: health, web page, CORS, create and list a task (adds one task)
 ```
 
 Open `http://localhost:8080`; the API is on `http://localhost:3000`. Stop the API from `npm run start:dev`
@@ -93,7 +93,8 @@ TEST_DATABASE_URL=postgres://tasks:tasks@127.0.0.1:5432/tasks_test bash scripts/
 
 ## Continuous integration
 GitHub Actions (`.github/workflows/ci.yml`, D25) runs on every pull request and every push to `main`,
-with a read-only token. A newer push cancels the run still in progress. Two jobs run in parallel:
+with a read-only token. A newer push to a PR cancels its run still in progress; runs on `main` always finish.
+Two jobs run in parallel:
 - **Lint, test, build**: `bash scripts/verify.sh` with a `postgres:18` service and `TEST_DATABASE_URL` set,
   so the real-Postgres suite runs on every change.
 - **Images and smoke test**: `docker compose up --build --wait`, then `scripts/smoke-test.sh`; service logs

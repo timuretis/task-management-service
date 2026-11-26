@@ -19,23 +19,23 @@ against real Postgres and that the images start and work together.
 - Base images `node:24-alpine` and an unprivileged nginx, pinned by tag; no new production dependencies
 
 ## Tasks (in order, each one a small commit)
-1. `.dockerignore` and the API image: build stage compiles with dev dependencies, runtime stage has production
+- [x] 1. `.dockerignore` and the API image: build stage compiles with dev dependencies, runtime stage has production
    dependencies only, runs as a non-root user, `HEALTHCHECK` on `/health`, and can also run the migrate command -
    done when the image builds and `docker run` with a `DATABASE_URL` answers `/health`.
-2. Web image: Vite build with `VITE_API_URL` as a build argument, static files served by non-root nginx on an
+- [x] 2. Web image: Vite build with `VITE_API_URL` as a build argument, static files served by non-root nginx on an
    unprivileged port - done when the image builds and serves the page.
-3. Compose grows to `db`, `migrate`, `api` and `web`: the API waits for a healthy `db` and a finished `migrate`,
+- [x] 3. Compose grows to `db`, `migrate`, `api` and `web`: the API waits for a healthy `db` and a finished `migrate`,
    runs with `NODE_ENV=production` and `CORS_ORIGIN` set to the web origin; all ports bound to localhost -
    done when `docker compose up --wait` brings every service up healthy from an empty volume.
-4. Smoke-test script: against the running stack, checks `/health` is ok, the web page loads, the API answers
+- [x] 4. Smoke-test script: against the running stack, checks `/health` is ok, the web page loads, the API answers
    with the web origin in its CORS header, a task can be created and then appears in the list; exits non-zero
    with a clear message on the first failure - done when it passes locally and fails when the API is stopped.
-5. CI workflow, job `verify`: on pull requests and pushes to `main`, `contents: read` only, Node from `.nvmrc`,
+- [x] 5. CI workflow, job `verify`: on pull requests and pushes to `main`, `contents: read` only, Node from `.nvmrc`,
    cached `npm ci`, `bash scripts/verify.sh` with a `postgres:18` service and `TEST_DATABASE_URL` set, newer
    runs cancel older ones - done when the job is green on the PR and the log shows the real-Postgres suite ran.
-6. CI workflow, job `docker`: build both images, `docker compose up --wait`, run the smoke script, print service
+- [x] 6. CI workflow, job `docker`: build both images, `docker compose up --wait`, run the smoke script, print service
    logs on failure, always tear down - done when the job is green on the PR.
-7. Docs: README section on running with Docker and what CI checks; D26 recorded; phase table updated - done
+- [x] 7. Docs: README section on running with Docker and what CI checks; D26 recorded; phase table updated - done
    when verify is green and the reviewer has run.
 
 ## Tests

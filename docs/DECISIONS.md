@@ -189,7 +189,7 @@ Newest at the bottom. Format:
 ## D24. Two container images: the API, and the web app on nginx (phase 4)
 - Decision: a multi-stage image for the API (build stage with dev dependencies, runtime stage with production
   dependencies only) and a multi-stage image for the web app (Vite build, then static files served by a
-  non-root nginx). `VITE_API_URL` is a build argument. `docker-compose.yml` grows to `db`, `api` and `web`.
+  non-root nginx). `VITE_API_URL` is a build argument. `docker-compose.yml` grows to `db`, `migrate` (D26), `api` and `web`.
 - Alternative: one image where the API also serves the built web files, or hosting the web files on S3.
 - Why / trade-off: one job per image, small runtime images and a fit with D22 (separate origins, CORS).
   `VITE_API_URL` is baked in at build time, so each environment needs its own web image build.
@@ -199,7 +199,8 @@ Newest at the bottom. Format:
   `contents: read` only. Job `verify`: Node 24, `npm ci` (cached), `bash scripts/verify.sh` with a `postgres:18`
   service container and `TEST_DATABASE_URL` set, so the real-Postgres suite runs on every change (D21). Job
   `docker`: build both images, `docker compose up`, then check `/health`, the web page, and create and list a
-  task. Actions are pinned to major version tags, npm is cached, and a newer run cancels the older one.
+  task. Actions are pinned to major version tags, npm is cached, and a newer run cancels the older one on a
+  pull request (runs on the default branch always finish).
 - Alternative: `verify` plus a plain `docker build` with no smoke test.
 - Why / trade-off: images and the compose file are proven on every change, not only built. The smoke test is the
   slower, more fragile part. Pinning to tags is easier to read than commit SHAs but trusts the action's author;
