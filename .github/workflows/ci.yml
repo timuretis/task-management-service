@@ -1,0 +1,49 @@
+# CI (D25): proves every pull request and every update of main.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Least privilege: the jobs only read the code.
+permissions:
+  contents: read
+
+# A newer push to the same branch or PR cancels the run that is still going.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      # A real database, so the opt-in real-Postgres suite runs on every change (D21).
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: tasks
+          POSTGRES_PASSWORD: tasks
+          # The suite drops its schema, so it only accepts a database named *_test.
+          POSTGRES_DB: tasks_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tasks -d tasks_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://tasks:tasks@localhost:5432/tasks_test
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          # verify.sh checks the Node major version against the same file.
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: bash scripts/verify.sh
