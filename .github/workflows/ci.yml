@@ -10,10 +10,11 @@ on:
 permissions:
   contents: read
 
-# A newer push to the same branch or PR cancels the run that is still going.
+# A newer push to the same PR cancels the run that is still going. Runs on main are never
+# cancelled, so every merge gets a complete result (phase 5 deploys from them).
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   verify:

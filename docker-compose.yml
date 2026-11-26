@@ -36,10 +36,10 @@ services:
         condition: service_healthy
 
   api:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
+    # Built by the migrate service above; building it here too would build the same image twice.
+    # "never" stops compose from looking for it on Docker Hub, where it does not exist.
     image: task-management-api
+    pull_policy: never
     environment:
       NODE_ENV: production
       PORT: "3000"
