@@ -118,3 +118,55 @@ Newest at the bottom. Format:
   decision. One more skill to maintain.
   Branch deletion is left to the repo setting "Automatically delete head branches": the GitHub tools
   have no delete call and the cloud session's git access is refused with a 403 when it tries.
+
+## D17. `pg` with plain SQL and `node-pg-migrate` (phase 2)
+- Decision: a `PostgresTasksRepository` using the `pg` driver with parameterized SQL; versioned SQL
+  migrations with `node-pg-migrate` 7 (CommonJS). `pg` and `node-pg-migrate` are production dependencies
+  because migrations run at deploy time.
+- Alternative: TypeORM (`@nestjs/typeorm` 11), or Drizzle.
+- Why / trade-off: two queries do not justify an ORM; every query and index is visible SQL that is easy to
+  explain. Rows are mapped by hand and the code grows less gracefully if the schema gets large.
+  `node-pg-migrate` is pinned to 7.x because 8.x and 9.x declare `type: module` (same reason as D12 and D13).
+  Known cost: 7.x pulls in `glob` and `minimatch` versions with advisories (`npm audit --omit=dev`: 2 high,
+  1 moderate). They only scan our own migrations folder, the `glob` CLI is never run and no untrusted pattern
+  reaches them, so the practical risk is low. The only fix is 9.x, which needs the move to ESM; revisit then.
+  Migrations run through its API from a 25-line wrapper script, which reads `.env` and gives a clear error
+  when `DATABASE_URL` is missing; the same package is used by the real-Postgres test suite.
+
+## D18. The app keeps generating UUIDv7 ids; the database does not (phase 2)
+- Decision: `id` stays an app-generated UUIDv7 (the `uuid` package stays a production dependency);
+  the column is a plain `uuid PRIMARY KEY`. This replaces the "Postgres 18 `DEFAULT uuidv7()`" part of D7.
+- Alternative: Postgres 18 generates the id.
+- Why / trade-off: works on every Postgres version, and e2e runs against a real database in the cloud
+  session (Postgres 16, no Docker). The id exists before the insert; ids from several instances are
+  ordered by each instance's clock, which is close enough for index locality.
+
+## D19. `tasks` table with DB-level constraints and a `created_at` index (phase 2)
+- Decision: `tasks(id uuid PK, title varchar(200) NOT NULL, description varchar(2000), status text NOT NULL
+  DEFAULT 'todo' CHECK in (todo, in_progress, done), created_at timestamptz NOT NULL DEFAULT now())`.
+  The list orders by `created_at DESC, id DESC` and has an index on exactly those columns.
+- Alternative: `ORDER BY id DESC`, served by the primary-key index with no extra index.
+- Why / trade-off: the ordering says what the API means and does not depend on how ids are generated.
+  Costs one extra index (slightly slower inserts). Constraints duplicate the DTO rules on purpose, so bad
+  rows cannot be stored even if the app has a bug.
+
+## D20. One `pg.Pool` provider; `/health` checks the database (phase 2)
+- Decision: a single `Pool` (max 10, connect and idle timeouts) from `DATABASE_URL`, validated at startup and
+  closed on shutdown. `GET /health` runs `SELECT 1` with a 2 s timeout and answers 503 `{ status: "error" }`
+  (cause logged) when it fails.
+- Alternative: keep `/health` free of the database and add a separate readiness endpoint.
+- Why / trade-off: one endpoint, as the requirements list, and a real signal for deploy checks. A database
+  outage makes the API report unhealthy, which an orchestrator could treat as a reason to restart it.
+  The check shares the request pool: if all 10 connections stay busy for 2 s, a healthy but overloaded
+  instance also answers 503. A separate one-connection pool for health would avoid that, at the cost of
+  an eleventh connection per instance; revisit if probes ever flap under load.
+
+## D21. e2e on `pg-mem`, plus an opt-in real-Postgres suite (phase 2)
+- Decision: the default e2e suite runs the real `PostgresTasksRepository` against `pg-mem` (dev dependency),
+  so `bash scripts/verify.sh` needs no database. A small suite runs against real PostgreSQL only when
+  `TEST_DATABASE_URL` is set (name must end in `_test`) and covers the real migration, constraints, the
+  index and the list ordering. Unit tests mock the pool.
+- Alternative: e2e always on a real PostgreSQL (the `testing` skill's earlier rule), or reuse the in-memory repository.
+- Why / trade-off: fast, dependency-free verification, and this cloud session has no Docker. `pg-mem`
+  does not emulate Postgres exactly, so only the opt-in suite proves the migration and constraints; if it is
+  not run (for example, CI not set up yet), those are untested. The `testing` skill is updated to match.

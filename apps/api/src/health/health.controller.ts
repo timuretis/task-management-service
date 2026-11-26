@@ -1,8 +1,10 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
+import { Response } from 'express';
+import { HealthService } from './health.service';
 
 export interface HealthResponse {
-  status: 'ok';
+  status: 'ok' | 'error';
   uptime: number;
   timestamp: string;
 }
@@ -11,10 +13,15 @@ export interface HealthResponse {
 @SkipThrottle()
 @Controller('health')
 export class HealthController {
+  constructor(private readonly healthService: HealthService) {}
+
   @Get()
-  check(): HealthResponse {
+  async check(@Res({ passthrough: true }) res: Response): Promise<HealthResponse> {
+    const databaseUp = await this.healthService.isDatabaseUp();
+    // 503 tells a load balancer or deploy check that this instance cannot serve requests (D20).
+    if (!databaseUp) res.status(HttpStatus.SERVICE_UNAVAILABLE);
     return {
-      status: 'ok',
+      status: databaseUp ? 'ok' : 'error',
       // Process uptime in whole seconds; easier to read than a float.
       uptime: Math.floor(process.uptime()),
       timestamp: new Date().toISOString(),

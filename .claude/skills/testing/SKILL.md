@@ -20,8 +20,11 @@ Every feature and bug fix ships with tests.
 - Test behavior, not internals. Name tests by behavior:
   `it('rejects a task with an empty title')`, not `it('works')`.
 - Unit tests sit next to the code (`tasks.service.spec.ts`); e2e tests in `apps/api/test/`.
-- e2e uses a real PostgreSQL (Docker locally, a service container in CI), runs migrations
-  first and cleans tables between tests. Tests call HTTP only, never services directly.
+- Default e2e runs against `pg-mem` (an in-process Postgres emulator): the migration SQL is applied
+  first and tables are cleaned between tests. Tests call HTTP only, never services directly (see D21).
+- A small opt-in suite (`*.pg-spec.ts`) runs against a real PostgreSQL when `TEST_DATABASE_URL` is set
+  (Docker locally, a service container in CI) and is skipped otherwise. It must check the real migration,
+  the constraints, the index and the list ordering. The database name must end in `_test`.
 - Don't test trivial glue (`main.ts`, module files); exclude it from coverage instead.
 
 ## Always cover

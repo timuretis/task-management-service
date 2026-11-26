@@ -4,6 +4,7 @@ export interface AppConfig {
   port: number;
   nodeEnv: NodeEnv;
   corsOrigins: string[];
+  databaseUrl: string;
 }
 
 const NODE_ENVS: NodeEnv[] = ['development', 'production', 'test'];
@@ -44,11 +45,27 @@ function parseCorsOrigins(value: string | undefined, nodeEnv: NodeEnv): string[]
   return value.split(',').map((origin) => parseOrigin(origin.trim()));
 }
 
+// The URL holds the password, so no error below repeats its value.
+function parseDatabaseUrl(value: string | undefined): string {
+  if (!value) throw new Error('DATABASE_URL is required');
+  let protocol: string;
+  try {
+    protocol = new URL(value).protocol;
+  } catch {
+    throw new Error('DATABASE_URL is not a valid URL');
+  }
+  if (protocol !== 'postgres:' && protocol !== 'postgresql:') {
+    throw new Error('DATABASE_URL must start with postgres:// or postgresql://');
+  }
+  return value;
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const nodeEnv = parseNodeEnv(env.NODE_ENV);
   return {
     port: parsePort(env.PORT),
     nodeEnv,
     corsOrigins: parseCorsOrigins(env.CORS_ORIGIN, nodeEnv),
+    databaseUrl: parseDatabaseUrl(env.DATABASE_URL),
   };
 }

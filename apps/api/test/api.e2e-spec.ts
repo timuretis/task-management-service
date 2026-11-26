@@ -1,4 +1,5 @@
 import { INestApplication, Logger } from '@nestjs/common';
+import { Pool } from 'pg';
 import request from 'supertest';
 import { TasksRepository } from '../src/tasks/tasks.repository';
 import { createTestApp } from './create-test-app';
@@ -123,9 +124,9 @@ describe('API with a failing store (e2e)', () => {
   it('answers 500 without leaking internal details', async () => {
     jest.spyOn(Logger.prototype, 'error').mockImplementation();
     const failing = { findRecent: () => Promise.reject(new Error('relation "tasks" is missing')) };
-    const app = await createTestApp((builder) =>
-      builder.overrideProvider(TasksRepository).useValue(failing),
-    );
+    const app = await createTestApp({
+      customize: (builder) => builder.overrideProvider(TasksRepository).useValue(failing),
+    });
 
     const res = await request(app.getHttpServer()).get('/tasks').expect(500);
 
@@ -134,6 +135,28 @@ describe('API with a failing store (e2e)', () => {
       message: 'Internal server error',
       error: 'Internal Server Error',
     });
+    await app.close();
+    jest.restoreAllMocks();
+  });
+});
+
+describe('API with an unreachable database (e2e)', () => {
+  it('answers 503 on /health without leaking the cause', async () => {
+    jest.spyOn(Logger.prototype, 'error').mockImplementation();
+    const down = {
+      query: () => Promise.reject(new Error('connect ECONNREFUSED 10.0.0.5:5432')),
+      end: () => Promise.resolve(),
+    } as unknown as Pool;
+    const app = await createTestApp({ pool: down });
+
+    const res = await request(app.getHttpServer()).get('/health').expect(503);
+
+    expect(res.body).toEqual({
+      status: 'error',
+      uptime: expect.any(Number),
+      timestamp: expect.any(String),
+    });
+    expect(JSON.stringify(res.body)).not.toContain('ECONNREFUSED');
     await app.close();
     jest.restoreAllMocks();
   });
