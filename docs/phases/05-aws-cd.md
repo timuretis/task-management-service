@@ -28,7 +28,7 @@ Terraform provisions one EC2 instance that runs the app over HTTPS at `https://t
 - [x] 2. Production compose file and Caddyfile: GHCR images by `IMAGE_TAG`, `db` on loopback only, password from `.env`,
    Caddy on 80/443 with a certificate volume, HSTS and CSP, `awslogs` for every service - done when
    `docker compose config` and `caddy validate` pass.
-- [ ] 3. Smoke test read-only mode (health, web page, CORS; no task created) - done when it passes against the local
+- [x] 3. Smoke test read-only mode (health, web page, CORS; no task created) - done when it passes against the local
    stack and the task count does not change.
 - [ ] 4. Terraform for the instance: security group, key pair, IAM instance role (SSM, write to its log group),
    log group, encrypted disk, IMDSv2 hop limit 1, Elastic IP, `ignore_changes` on AMI and user data; outputs for the IP,
