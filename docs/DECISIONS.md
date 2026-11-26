@@ -135,3 +135,12 @@ Newest at the bottom. Format:
 - Why / trade-off: works on every Postgres version, and e2e runs against a real database in the cloud
   session (Postgres 16, no Docker). The id exists before the insert; ids from several instances are
   ordered by each instance's clock, which is close enough for index locality.
+
+## D19. `tasks` table with DB-level constraints and a `created_at` index (phase 2)
+- Decision: `tasks(id uuid PK, title varchar(200) NOT NULL, description varchar(2000), status text NOT NULL
+  DEFAULT 'todo' CHECK in (todo, in_progress, done), created_at timestamptz NOT NULL DEFAULT now())`.
+  The list orders by `created_at DESC, id DESC` and has an index on exactly those columns.
+- Alternative: `ORDER BY id DESC`, served by the primary-key index with no extra index.
+- Why / trade-off: the ordering says what the API means and does not depend on how ids are generated.
+  Costs one extra index (slightly slower inserts). Constraints duplicate the DTO rules on purpose, so bad
+  rows cannot be stored even if the app has a bug.
