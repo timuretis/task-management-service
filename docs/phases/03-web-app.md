@@ -22,7 +22,7 @@ the task list with loading, empty and error states. It talks to the existing API
    5xx to readable errors - done when its unit tests pass.
 - [x] 4. `useHealth` (polls every 30 s, cleans up on unmount) and `HealthBadge` - done when tests cover
    online, offline, a 503 and cleanup.
-- [ ] 5. `useTasks` (list, create, retry; a new task is added at the top; a slow list answer must not overwrite
+- [x] 5. `useTasks` (list, create, retry; a new task is added at the top; a slow list answer must not overwrite
    a task created meanwhile) - done when tests cover loading, empty, error, retry, create and that race.
 - [ ] 6. `TaskForm` with validation that mirrors the API (title trimmed, 1-200; description up to 2000),
    disabled while submitting, server errors shown with the typed text kept - done when tests cover each case.
