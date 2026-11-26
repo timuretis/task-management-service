@@ -30,7 +30,7 @@ Terraform provisions one EC2 instance that runs the app over HTTPS at `https://t
    `docker compose config` and `caddy validate` pass.
 - [x] 3. Smoke test read-only mode (health, web page, CORS; no task created) - done when it passes against the local
    stack and the task count does not change.
-- [ ] 4. Terraform for the instance: security group, key pair, IAM instance role (SSM, write to its log group),
+- [x] 4. Terraform for the instance: security group, key pair, IAM instance role (SSM, write to its log group),
    log group, encrypted disk, IMDSv2 hop limit 1, Elastic IP, `ignore_changes` on AMI and user data; outputs for the IP,
    the DNS records to add and the role ARN - done when `fmt` and `validate` pass in `verify.sh`.
 - [ ] 5. Terraform for CI access: GitHub OIDC provider and a deploy role that trusts only this repo's `main` and may
