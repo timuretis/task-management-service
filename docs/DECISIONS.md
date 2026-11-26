@@ -185,3 +185,30 @@ Newest at the bottom. Format:
 - Alternative: add `msw` to mock the network at a lower level.
 - Why / trade-off: fewer dependencies and less to explain; the API wrapper is small enough for a plain mock.
   jsdom is not a real browser, so the browser check covers what it cannot.
+
+## D24. Two container images: the API, and the web app on nginx (phase 4)
+- Decision: a multi-stage image for the API (build stage with dev dependencies, runtime stage with production
+  dependencies only) and a multi-stage image for the web app (Vite build, then static files served by a
+  non-root nginx). `VITE_API_URL` is a build argument. `docker-compose.yml` grows to `db`, `migrate` (D26), `api` and `web`.
+- Alternative: one image where the API also serves the built web files, or hosting the web files on S3.
+- Why / trade-off: one job per image, small runtime images and a fit with D22 (separate origins, CORS).
+  `VITE_API_URL` is baked in at build time, so each environment needs its own web image build.
+
+## D25. CI runs verify with Postgres 18 and a compose smoke test (phase 4)
+- Decision: one workflow on every pull request and on every update of the default branch, permissions
+  `contents: read` only. Job `verify`: Node 24, `npm ci` (cached), `bash scripts/verify.sh` with a `postgres:18`
+  service container and `TEST_DATABASE_URL` set, so the real-Postgres suite runs on every change (D21). Job
+  `docker`: build both images, `docker compose up`, then check `/health`, the web page, and create and list a
+  task. Actions are pinned to major version tags, npm is cached, and a newer run cancels the older one on a
+  pull request (runs on the default branch always finish).
+- Alternative: `verify` plus a plain `docker build` with no smoke test.
+- Why / trade-off: images and the compose file are proven on every change, not only built. The smoke test is the
+  slower, more fragile part. Pinning to tags is easier to read than commit SHAs but trusts the action's author;
+  SHA pinning is the upgrade path. No image publishing or deploy yet (phase 5).
+
+## D26. Migrations run as a one-off `migrate` service (phase 4)
+- Decision: compose has a `migrate` service built from the API image that runs the migrate command once; the
+  `api` service starts only after it exits successfully. The API never migrates on startup.
+- Alternative: the API container runs migrations in its entrypoint before starting.
+- Why / trade-off: one migration run per deploy, with no race when several API instances start, and the same step
+  can run on EC2 in phase 5. Costs one more service, and a failed migration blocks the API from starting, which is intended.

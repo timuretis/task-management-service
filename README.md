@@ -39,6 +39,27 @@ Two things to remember for a real deployment:
   A production build without it shows "The app is not configured" instead of calling `localhost`.
 - The API's `CORS_ORIGIN` must list the web app's exact origin, or the browser blocks every call.
 
+### Everything in Docker
+The production images, with no Node needed on your machine:
+
+```bash
+docker compose up --build --wait   # database, migrations, API and web app; waits until all are healthy
+bash scripts/smoke-test.sh         # optional: health, web page, CORS, create and list a task (adds one task)
+```
+
+Open `http://localhost:8080`; the API is on `http://localhost:3000`. Stop the API from `npm run start:dev`
+first, since both use port 3000. `docker compose down` stops the stack and keeps the data.
+
+How it fits together (D24, D26):
+- `db` is PostgreSQL 18, shared with the local setup above.
+- `migrate` runs the migrations once from the API image and exits; `api` starts only if it succeeded, so the
+  API never changes the schema itself.
+- `api` runs in production mode (JSON logs, `CORS_ORIGIN=http://localhost:8080`) as a non-root user.
+- `web` is the built app served by nginx as a non-root user. Its image is built for
+  `VITE_API_URL=http://localhost:3000`, so another environment needs its own build:
+  `docker build -f apps/web/Dockerfile --build-arg VITE_API_URL=<api url> .`
+- Every port is bound to `127.0.0.1`, and the passwords in `docker-compose.yml` are for local use only.
+
 ### Without Docker
 Any local PostgreSQL works. Create the role and the two databases that `docker-compose.yml` creates,
 then run the same migrate and start commands:
@@ -69,6 +90,19 @@ database whose name does not end in `_test`:
 ```bash
 TEST_DATABASE_URL=postgres://tasks:tasks@127.0.0.1:5432/tasks_test bash scripts/verify.sh
 ```
+
+## Continuous integration
+GitHub Actions (`.github/workflows/ci.yml`, D25) runs on every pull request and every push to `main`,
+with a read-only token. A newer push to a PR cancels its run still in progress; runs on `main` always finish.
+Two jobs run in parallel:
+- **Lint, test, build**: `bash scripts/verify.sh` with a `postgres:18` service and `TEST_DATABASE_URL` set,
+  so the real-Postgres suite runs on every change.
+- **Images and smoke test**: `docker compose up --build --wait`, then `scripts/smoke-test.sh`; service logs
+  are printed if anything fails.
+
+No image is published and nothing is deployed yet (phase 5). Pushing a change to a workflow file needs a
+GitHub token with the `workflow` scope (`gh auth refresh -s workflow`, then `gh auth setup-git`).
+
 ## Deployment
 ## System Architecture
 ### Scalability (10x traffic)

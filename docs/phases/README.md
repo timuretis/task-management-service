@@ -11,6 +11,6 @@ Proposed roadmap (one working day). The order and scope are confirmed in each ph
 | 1 | API core | NestJS, `/health`, `/tasks`, validation, logging middleware, unit tests |
 | 2 | Database | PostgreSQL, migrations, indexes, e2e tests, docker compose |
 | 3 | Web app | React list, form, health badge, UI states |
-| 4 | Container and CI | Multi-stage Dockerfile, GitHub Actions (lint, test, build) |
+| 4 | Container and CI | API and web images, full compose stack, CI: verify on Postgres 18 and a smoke test |
 | 5 | AWS and CD | Terraform EC2, deploy on push to `main`, `docs/aws-setup.md` |
 | 6 | Docs | README: setup, architecture, scalability, observability, AI usage |

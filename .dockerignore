@@ -1,0 +1,29 @@
+# Both images build from the repo root (npm workspaces share one lockfile),
+# so keep everything the images do not need out of the build context.
+**/node_modules
+**/dist
+**/coverage
+.git
+.github
+.claude
+.devcontainer
+docs
+infra
+scripts
+**/*.log
+.DS_Store
+
+# Tests never ship in an image.
+apps/api/test
+**/*.spec.ts
+**/*.test.ts
+**/*.test.tsx
+
+# Secrets and state.
+**/.env
+**/.env.*
+*.pem
+*.key
+*.tfstate
+*.tfstate.*
+*.tfvars
