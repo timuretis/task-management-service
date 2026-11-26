@@ -204,3 +204,10 @@ Newest at the bottom. Format:
 - Why / trade-off: images and the compose file are proven on every change, not only built. The smoke test is the
   slower, more fragile part. Pinning to tags is easier to read than commit SHAs but trusts the action's author;
   SHA pinning is the upgrade path. No image publishing or deploy yet (phase 5).
+
+## D26. Migrations run as a one-off `migrate` service (phase 4)
+- Decision: compose has a `migrate` service built from the API image that runs the migrate command once; the
+  `api` service starts only after it exits successfully. The API never migrates on startup.
+- Alternative: the API container runs migrations in its entrypoint before starting.
+- Why / trade-off: one migration run per deploy, with no race when several API instances start, and the same step
+  can run on EC2 in phase 5. Costs one more service, and a failed migration blocks the API from starting, which is intended.
