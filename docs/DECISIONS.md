@@ -216,7 +216,8 @@ Newest at the bottom. Format:
 ## D27. One EC2 instance runs the compose stack, Postgres included (phase 5)
 - Decision: Terraform provisions one EC2 instance that runs the same compose stack as CI (`db`, `migrate`, `api`,
   `web`). Postgres data lives on the instance's EBS disk. Terraform ignores changes to the AMI and the startup
-  script, so an `apply` never replaces the instance (and its data) by accident.
+  script, so an `apply` never replaces the instance (and its data) by accident. API termination protection and
+  `prevent_destroy` add two more guards; a deliberate teardown lifts them first (docs/aws-setup.md).
 - Alternative: EC2 for the app and RDS for Postgres.
 - Why / trade-off: it meets the assignment literally (an EC2 instance; even an in-memory store is allowed), keeps
   Terraform small and runs in production exactly what CI tests. There are no managed backups, and losing the
@@ -270,7 +271,8 @@ Newest at the bottom. Format:
 ## D33. The instance keeps a Git checkout and each deploy moves it to the deployed SHA (phase 5)
 - Decision: the first-boot script clones the public repo to `/opt/app`. A deploy (run through SSM, D29) checks out
   the commit SHA that CI built, then runs `docker compose -f compose.prod.yml pull` and `up -d --wait` with that SHA
-  as the image tag (D30). The password `.env` (D32) stays outside Git.
+  as the image tag (D30). Only our own images are pulled, so a new upstream `postgres` or `caddy` release never
+  replaces a running container during an unrelated deploy. The password `.env` (D32) stays outside Git.
 - Alternative: fetch only the needed files with `curl`, or send their contents inside the SSM command.
 - Why / trade-off: config, images and code always come from the same commit, and a rollback is the same command with
   an older SHA. The instance needs Git and network access to GitHub, but no credentials because the repo is public.
