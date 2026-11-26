@@ -126,8 +126,11 @@ shows the containers.
 
 ## Take it all down
 
+The instance is protected on purpose (it holds the database). First lift both guards: in `infra/main.tf` set
+`disable_api_termination = false` and `prevent_destroy = false`, run `terraform apply` (it changes one setting in place),
+then:
+
 ```bash
-cd infra
 terraform destroy   # type "yes"
 ```
 

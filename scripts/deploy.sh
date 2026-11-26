@@ -13,7 +13,8 @@ APP_DIR="${APP_DIR:-/opt/app}"
 }
 
 cd "$APP_DIR"
-# Config, images and code all come from this one commit (D33).
+# Config, images and code all come from this one commit (D33). CI already ran this same checkout so that
+# this script is the new version; it is repeated here so a manual rollback works on its own.
 git fetch --quiet origin main
 git checkout --quiet --detach "$SHA"
 
@@ -22,6 +23,8 @@ git checkout --quiet --detach "$SHA"
 chmod 600 .env.new
 mv .env.new .env
 
-docker compose -f compose.prod.yml pull --quiet
+# Only our own images: pulling `db` and `caddy` too would let a new upstream release replace the
+# database container during an unrelated deploy.
+docker compose -f compose.prod.yml pull --quiet api web migrate
 docker compose -f compose.prod.yml up -d --wait --remove-orphans
 echo "deployed $SHA"

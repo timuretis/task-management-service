@@ -141,8 +141,14 @@ resource "aws_instance" "app" {
 
   # The instance holds the database, so a newer AMI or an edited startup script must never replace it.
   # To really rebuild it, the author removes this on purpose and accepts the data loss.
+  # Two more guards: AWS refuses to terminate it, and Terraform refuses to plan its destruction
+  # (an edit of key, type or disk that forces a replacement would otherwise delete the data).
+  # docs/aws-setup.md says how to lift them for a deliberate teardown.
+  disable_api_termination = true
+
   lifecycle {
-    ignore_changes = [ami, user_data]
+    ignore_changes  = [ami, user_data]
+    prevent_destroy = true
   }
 }
 
