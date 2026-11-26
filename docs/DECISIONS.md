@@ -112,7 +112,9 @@ Newest at the bottom. Format:
 
 ## D16. Merging is a user-invoked skill, `/merge-pr` (phase 1)
 - Decision: after the author's own review, `/merge-pr` squash-merges the PR into `main` (pinned to the
-  reviewed commit), deletes the branch on GitHub and updates local `main`. The merge hook still asks first.
+  reviewed commit), checks that GitHub deleted the branch and updates local `main`. The merge hook still asks first.
 - Alternative: the author merges by hand in GitHub, or Claude merges on its own.
 - Why / trade-off: removes repetitive steps and forgotten branch cleanup, while the author keeps the
-  decision. One more skill to maintain; the branch is deleted through git because the GitHub tools have no such call.
+  decision. One more skill to maintain.
+  Branch deletion is left to the repo setting "Automatically delete head branches": the GitHub tools
+  have no delete call and the cloud session's git access is refused with a 403 when it tries.
