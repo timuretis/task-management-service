@@ -170,3 +170,10 @@ Newest at the bottom. Format:
 - Why / trade-off: fast, dependency-free verification, and this cloud session has no Docker. `pg-mem`
   does not emulate Postgres exactly, so only the opt-in suite proves the migration and constraints; if it is
   not run (for example, CI not set up yet), those are untested. The `testing` skill is updated to match.
+
+## D22. The web app calls the API by full URL, over CORS (phase 3)
+- Decision: the React app reads the API base URL from `VITE_API_URL` and calls it directly; the API's CORS
+  allow-list (D11) names the web origin (`http://localhost:5173` in development).
+- Alternative: same origin, through a Vite dev proxy and a reverse proxy in production.
+- Why / trade-off: uses the CORS setup already built and keeps hosting open for phase 5. Production must set
+  `CORS_ORIGIN` to the web app's origin or the browser blocks every call. `VITE_` values are public, so no secret goes there.
