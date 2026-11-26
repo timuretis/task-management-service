@@ -144,3 +144,11 @@ Newest at the bottom. Format:
 - Why / trade-off: the ordering says what the API means and does not depend on how ids are generated.
   Costs one extra index (slightly slower inserts). Constraints duplicate the DTO rules on purpose, so bad
   rows cannot be stored even if the app has a bug.
+
+## D20. One `pg.Pool` provider; `/health` checks the database (phase 2)
+- Decision: a single `Pool` (max 10, connect and idle timeouts) from `DATABASE_URL`, validated at startup and
+  closed on shutdown. `GET /health` runs `SELECT 1` with a 2 s timeout and answers 503 `{ status: "error" }`
+  (cause logged) when it fails.
+- Alternative: keep `/health` free of the database and add a separate readiness endpoint.
+- Why / trade-off: one endpoint, as the requirements list, and a real signal for deploy checks. A database
+  outage makes the API report unhealthy, which an orchestrator could treat as a reason to restart it.
