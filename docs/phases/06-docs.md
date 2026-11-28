@@ -13,22 +13,23 @@ observed and how AI was used, including a real correction, and every statement m
   needs no tooling
 
 ## Tasks (in order, each one a small commit)
-1. Architecture overview near the top of the README: browser, Caddy, web, API and PostgreSQL on one EC2 instance, as a
+1. [x] Architecture overview near the top of the README: browser, Caddy, web, API and PostgreSQL on one EC2 instance, as a
    text diagram with a link to D24-D36 - done when a newcomer can name every container and what talks to what.
-2. Fix the README structure: the `System Architecture` heading sits after Deployment with Scalability under it - done
+2. [x] Fix the README structure: the `System Architecture` heading sits after Deployment with Scalability under it - done
    when the order is overview, setup, tests, CI, deployment, scalability, observability, AI.
-3. Check the Scalability section against the code (rate limit store, `TRUST_PROXY`, pool size, `GET /tasks` index,
+3. [x] Check the Scalability section against the code (rate limit store, `TRUST_PROXY`, pool size, `GET /tasks` index,
    `/health` polling) and correct anything that is out of date - done when each claim is verified.
-4. Observability section: JSON request logs with request ID (D9), `/health` backed by the database (D20), CloudWatch
+4. [x] Observability section: JSON request logs with request ID (D9), `/health` backed by the database (D20), CloudWatch
    logs and Logs Insights (D36), the post-deploy smoke test (D34); then what is missing and the next step (metrics,
    alerts, tracing) - done when every claim is checked against the code and Terraform.
-5. `docs/ai-log.md`: add the second table with the three post-phase-5 fixes (OIDC subject, duplicate HSTS header,
+5. [x] `docs/ai-log.md`: add the second table with the three post-phase-5 fixes (OIDC subject, duplicate HSTS header,
    stale Caddy file mount), each with what went wrong and how it was found - done when it matches the phase 5 spec.
-6. AI Utilization section: workflow (Opus plans, Sonnet builds, project skills, hooks, one independent review per
+6. [x] AI Utilization section: workflow (Opus plans, Sonnet builds, project skills, hooks, one independent review per
    phase), where AI helped and where it did not, the Dockerfile `COPY` correction in full, the three AI-found bugs and
    the lesson that the live check caught what tests and CI could not - done when it links to `docs/ai-log.md`.
-7. Final check: every README link and command resolves, `GET /health` on the live API URL returns 200, no secrets or
-   personal details in the new text; note the results here - done when `bash scripts/verify.sh` passes.
+7. [ ] Final check: every README link and command resolves, no secrets or personal details in the new
+   text; note the results here - done when `bash scripts/verify.sh` passes. The live `GET /health` check is deferred to the
+   author (see results).
 
 ## Tests
 - Unit/E2E: none added, there is no new code. `bash scripts/verify.sh` must still pass (80% coverage gate unchanged).
@@ -56,4 +57,5 @@ observed and how AI was used, including a real correction, and every statement m
 - README relative links and the files and scripts it names all exist. No secrets or personal details in the new text.
 - `bash scripts/verify.sh`: OK.
 - Live `GET /health`: not run in this session. The network allowlist did not include the host, and the live request was
-  then denied by the permission check. Last verified live in phase 5, task 9.
+  then denied by the permission check. Deferred to the author: `curl -fsS https://tasks-api.timur.co.il/health`. Last verified
+  live in phase 5, task 9.

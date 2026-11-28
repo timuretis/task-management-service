@@ -181,13 +181,13 @@ What is missing, and the next step for each:
 
 ## AI Utilization
 The code was written with Claude Code under rules the author set and checked in the repository
-(`AGENTS.md`, `CLAUDE.md`, `.claude/`). The author chose every design decision; each phase's answers are in
+(`AGENTS.md`, `CLAUDE.md`, `.claude/`). The author decided each design question, choosing from options the AI proposed; the answers are in
 [DECISIONS.md](docs/DECISIONS.md), and the author reviewed and merged every pull request.
 
 **How the work was organised** (D1-D4):
 - **Opus plans, Sonnet builds.** Each phase starts with `/brainstorm` (an interview, one question at a time) and
-  `/to-spec` (a short spec with ordered tasks in `docs/phases/`), both on Opus. The building runs on Sonnet, in small
-  commits that follow the spec. Opus is better at design choices, and Sonnet is enough for coding to an agreed spec.
+  `/to-spec` (a short spec with ordered tasks in `docs/phases/`), both on Opus. The building runs mostly on Sonnet, in small
+  commits that follow the spec (some work, such as the phase 4 Dockerfile, ran on Opus; see the log). Opus is better at design choices, and Sonnet is enough for coding to an agreed spec.
 - **Project skills** for NestJS, React, testing and infrastructure load only for matching work, so each task sees the
   rules it needs and no more.
 - **Hooks enforce the rules the author cannot watch all day:** no commits or pushes on `main`, and a question before
