@@ -42,8 +42,21 @@ Terraform provisions one EC2 instance that runs the app over HTTPS at `https://t
    `deploy` is skipped there.
 - [x] 8. Docs: `docs/aws-setup.md` (tools, AWS sign-in, `apply`, DNS records, GitHub variables, GHCR visibility, first
    deploy order, SSH tunnel, logs, rollback, `destroy`), README Deployment section - done when a newcomer could follow it.
-- [ ] 9. Live check after the author's `apply` and the merge: deploy green, both HTTPS names answer, HSTS and CSP
+- [x] 9. Live check after the author's `apply` and the merge: deploy green, both HTTPS names answer, HSTS and CSP
    present, SSH tunnel to Postgres, logs in CloudWatch, rollback to the previous SHA - results noted here.
+
+### Task 9 results (2026-11-28, deployed `f5d8842`)
+- Deploy job green; both names answer over HTTPS with a Let's Encrypt certificate; `http://` redirects (308) to HTTPS;
+  CORS allows only the web origin; read-only smoke test passes against the live names.
+- Headers: web has HSTS (1 year), the CSP from D35, nosniff, DENY framing, no-referrer. Found the API sent **two**
+  HSTS headers (Caddy's plus helmet's `includeSubDomains`); fixed with Caddy's `>` prefix, verified against a stub
+  upstream locally (PR fix-api-hsts); the live recheck follows its deploy.
+- Logs: one CloudWatch stream per container; the API's JSON request lines are readable.
+- Database: SSH tunnel works (psql as `tasks`, PostgreSQL 18, 2 tables); port 5432 is closed from the internet.
+- Hardening: IMDSv2 required with hop limit 1; `.env` is mode 600, root-owned; SSM agent online.
+- Rollback: SSM deploy of the previous SHA `e1ccd97` ran both images from that tag and passed the smoke test; deploying
+  `f5d8842` again restored the current version.
+- Lessons: GitHub's immutable OIDC subject broke the first trust policy (PR 10); GHCR packages had to be made public.
 
 ## Tests
 - Unit/E2E: `trust proxy` config parsing; rate limit by forwarded IP only when enabled. Coverage stays at 80%+.
