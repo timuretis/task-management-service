@@ -14,6 +14,8 @@ tasks.timur.co.il {
 # API. Caddy adds X-Forwarded-For, which the API trusts for exactly one hop (TRUST_PROXY=1).
 tasks-api.timur.co.il {
 	encode zstd gzip
-	header Strict-Transport-Security "max-age=31536000"
+	# The ">" makes Caddy set the header after the API answers. Without it the API's own helmet header
+	# (with includeSubDomains) is sent as well, a second, conflicting Strict-Transport-Security.
+	header >Strict-Transport-Security "max-age=31536000"
 	reverse_proxy api:3000
 }
