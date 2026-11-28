@@ -27,7 +27,7 @@ observed and how AI was used, including a real correction, and every statement m
 6. [x] AI Utilization section: workflow (Opus plans, Sonnet builds, project skills, hooks, one independent review per
    phase), where AI helped and where it did not, the Dockerfile `COPY` correction in full, the three AI-found bugs and
    the lesson that the live check caught what tests and CI could not - done when it links to `docs/ai-log.md`.
-7. [ ] Final check: every README link and command resolves, no secrets or personal details in the new
+7. [x] Final check: every README link and command resolves, no secrets or personal details in the new
    text; note the results here - done when `bash scripts/verify.sh` passes. The live `GET /health` check is deferred to the
    author (see results).
 
@@ -56,6 +56,4 @@ observed and how AI was used, including a real correction, and every statement m
 - Added to Scalability: the single-instance and no-backup limit with the RDS step, which D27 said the README would describe.
 - README relative links and the files and scripts it names all exist. No secrets or personal details in the new text.
 - `bash scripts/verify.sh`: OK.
-- Live `GET /health`: not run in this session. The network allowlist did not include the host, and the live request was
-  then denied by the permission check. Deferred to the author: `curl -fsS https://tasks-api.timur.co.il/health`. Last verified
-  live in phase 5, task 9.
+- Live `GET /health`: run by the author after the PR was opened; answered `{"status":"ok","uptime":2506,...}` (200, status ok).
