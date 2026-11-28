@@ -1,4 +1,5 @@
 import { INestApplication } from '@nestjs/common';
+import { Server } from 'http';
 import request from 'supertest';
 import { createTestApp } from './create-test-app';
 
@@ -62,5 +63,45 @@ describe('Hardening (e2e)', () => {
     for (let i = 0; i < 101; i++) {
       await request(app.getHttpServer()).get('/health').expect(200);
     }
+  });
+
+  describe('behind a reverse proxy', () => {
+    // Fills the 20-per-minute POST budget for one forwarded client, then sends one more.
+    async function exhaustPostLimit(server: Server, ip: string): Promise<void> {
+      for (let i = 0; i < 20; i++) {
+        await request(server)
+          .post('/tasks')
+          .set('X-Forwarded-For', ip)
+          .send({ title: 't' })
+          .expect(201);
+      }
+    }
+
+    it('counts every client as one when TRUST_PROXY is off', async () => {
+      await exhaustPostLimit(app.getHttpServer(), '203.0.113.1');
+
+      await request(app.getHttpServer())
+        .post('/tasks')
+        .set('X-Forwarded-For', '203.0.113.2')
+        .send({ title: 'other client' })
+        .expect(429);
+    });
+
+    it('limits each client by X-Forwarded-For when TRUST_PROXY=1', async () => {
+      await app.close();
+      app = await createTestApp({ env: { TRUST_PROXY: '1' } });
+      await exhaustPostLimit(app.getHttpServer(), '203.0.113.1');
+
+      await request(app.getHttpServer())
+        .post('/tasks')
+        .set('X-Forwarded-For', '203.0.113.1')
+        .send({ title: 'same client' })
+        .expect(429);
+      await request(app.getHttpServer())
+        .post('/tasks')
+        .set('X-Forwarded-For', '203.0.113.2')
+        .send({ title: 'other client' })
+        .expect(201);
+    });
   });
 });

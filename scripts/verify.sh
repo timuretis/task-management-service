@@ -17,8 +17,14 @@ else
 fi
 
 if compgen -G "infra/*.tf" >/dev/null; then
-  terraform -chdir=infra fmt -check -recursive
-  terraform -chdir=infra init -backend=false -input=false
-  terraform -chdir=infra validate
+  # Use the local Terraform if installed; otherwise the official image, so Docker is enough.
+  if command -v terraform >/dev/null; then
+    tf() { terraform -chdir=infra "$@"; }
+  else
+    tf() { docker run --rm -v "$PWD:/repo" -w /repo/infra hashicorp/terraform:1.14 "$@"; }
+  fi
+  tf fmt -check -recursive
+  tf init -backend=false -input=false
+  tf validate
 fi
 echo "verify: OK"

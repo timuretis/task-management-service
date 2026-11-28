@@ -212,3 +212,97 @@ Newest at the bottom. Format:
 - Alternative: the API container runs migrations in its entrypoint before starting.
 - Why / trade-off: one migration run per deploy, with no race when several API instances start, and the same step
   can run on EC2 in phase 5. Costs one more service, and a failed migration blocks the API from starting, which is intended.
+
+## D27. One EC2 instance runs the compose stack, Postgres included (phase 5)
+- Decision: Terraform provisions one EC2 instance that runs the same compose stack as CI (`db`, `migrate`, `api`,
+  `web`). Postgres data lives on the instance's EBS disk. Terraform ignores changes to the AMI and the startup
+  script, so an `apply` never replaces the instance (and its data) by accident. API termination protection and
+  `prevent_destroy` add two more guards; a deliberate teardown lifts them first (docs/aws-setup.md).
+- Alternative: EC2 for the app and RDS for Postgres.
+- Why / trade-off: it meets the assignment literally (an EC2 instance; even an in-memory store is allowed), keeps
+  Terraform small and runs in production exactly what CI tests. There are no managed backups, and losing the
+  instance loses the data. Moving to RDS (backups, Multi-AZ) is the first step of the 10x plan, described in the README.
+
+## D28. HTTPS with Caddy on two subdomains of the author's domain (phase 5)
+- Decision: a Caddy container terminates TLS on 443 with Let's Encrypt certificates for `tasks.timur.co.il`
+  (web) and `tasks-api.timur.co.il` (API), and redirects port 80 to HTTPS. `web` and `api` are no longer
+  published on the host. The two A records are added by hand at the domain's DNS host (DNSExit, which has no
+  Terraform provider), using the Elastic IP that Terraform prints. The API sets `trust proxy` to one hop (Caddy),
+  as D15 planned. Caddy's certificates live in a volume, so redeploys do not hit Let's Encrypt's limits.
+- Alternative: plain HTTP on the Elastic IP (web on 80, API on 3000), or HTTPS by IP address with Let's Encrypt's
+  6-day IP certificates (generally available since January 2026).
+- Why / trade-off: real HTTPS on standard ports and names that do not change if the instance does, at the cost of
+  one more container and one manual DNS step outside AWS. The API stays cross-origin, so D22 (CORS) is unchanged.
+
+## D29. CI deploys through SSM Run Command, signed in to AWS with OIDC (phase 5)
+- Decision: on a push to `main`, GitHub Actions gets short-lived AWS credentials through OIDC (an IAM role that
+  trusts only this repository's `main` branch) and runs the deploy command on the instance with SSM Run Command,
+  then waits for its result and fails the run if it failed. The instance has an IAM role for the SSM agent.
+  SSH stays open only to the author's IP and is never used by CI.
+- Alternative: SSH from GitHub Actions with a private key in GitHub Secrets.
+- Why / trade-off: no long-lived AWS keys or SSH keys in GitHub, and port 22 is not opened to GitHub's thousands of
+  runner IP ranges. Costs more Terraform (OIDC provider, deploy role, instance role) and more concepts to explain.
+
+## D30. Images on GitHub Container Registry, public, tagged by commit SHA (phase 5)
+- Decision: CI pushes the API and web images to GHCR with the workflow's `GITHUB_TOKEN` (`packages: write` on the
+  deploy job only). The images are public, so the instance pulls them without registry credentials. Every deploy
+  uses the exact commit SHA that CI built and tested; a rollback redeploys an older SHA.
+- Alternative: private Amazon ECR repositories (scan on push, but more Terraform and a registry login on the instance).
+- Why / trade-off: no AWS resources and no credentials on the instance. The images are public, which is safe because
+  they contain no secrets (D24, `.dockerignore`), and a deploy depends on GitHub being up as well as AWS.
+
+## D31. Terraform state stays local on the author's machine (phase 5)
+- Decision: no remote backend. The state file lives in `infra/` on the author's machine and is git-ignored (D5:
+  only the author runs `apply`).
+- Alternative: an encrypted, versioned S3 bucket as the backend, with S3's built-in state locking.
+- Why / trade-off: nothing to create before the first `apply` and nothing more to explain. If the state file is
+  lost, Terraform no longer knows its resources and they must be imported or deleted by hand, so the author keeps
+  a private backup. Move to S3 when a second person or CI needs to run Terraform.
+
+## D32. Database password made on the instance; laptop access through an SSH tunnel (phase 5)
+- Decision: the instance's first-boot script generates a random Postgres password once and writes it to a
+  root-only `.env` next to the production compose file. `db` is published only on the instance's loopback
+  (`127.0.0.1:5432`), and the security group has no database port. The author connects from a laptop with an SSH
+  tunnel (`ssh -L`), over the SSH access the security group already allows from the author's IP.
+- Alternative: Terraform generates the password and stores it in SSM Parameter Store; or open 5432 to the author's IP.
+- Why / trade-off: the password never leaves the instance (not in Terraform state, GitHub or the repo) and Postgres
+  never faces the internet. If the instance is lost the password goes with it, but so does the data (D27).
+
+## D33. The instance keeps a Git checkout and each deploy moves it to the deployed SHA (phase 5)
+- Decision: the first-boot script clones the public repo to `/opt/app`. A deploy (run through SSM, D29) checks out
+  the commit SHA that CI built, then runs `docker compose -f compose.prod.yml pull` and `up -d --wait` with that SHA
+  as the image tag (D30). Only our own images are pulled, so a new upstream `postgres` or `caddy` release never
+  replaces a running container during an unrelated deploy. The password `.env` (D32) stays outside Git.
+- Alternative: fetch only the needed files with `curl`, or send their contents inside the SSM command.
+- Why / trade-off: config, images and code always come from the same commit, and a rollback is the same command with
+  an older SHA. The instance needs Git and network access to GitHub, but no credentials because the repo is public.
+
+## D34. Deploy is a third CI job, checked by a read-only production smoke test (phase 5)
+- Decision: `ci.yml` gets a `deploy` job that runs only on pushes to `main` and only after `verify` and `docker`
+  pass. It pushes both images to GHCR (D30), deploys through SSM (D29, D33), then runs `scripts/smoke-test.sh`
+  against the live HTTPS names in a read-only mode (health, web page, CORS; no task is created). Only this job has
+  `packages: write` and `id-token: write`. The deploy role's ARN and the domain names are repository variables.
+- Alternative: a separate `deploy.yml` started by `workflow_run` when CI finishes on `main`.
+- Why / trade-off: one file shows the whole path from test to production, and the job graph guarantees nothing
+  untested is deployed. Testing and deploying share one workflow, so the file grows. The read-only check never
+  writes to the live site, so creating a task in production is not proven on each deploy.
+
+## D35. Security hardening: headers in Caddy, IMDSv2 with hop limit 1, minimal ingress (phase 5)
+- Decision: Caddy sends HSTS (one year, the two names only, no `includeSubDomains`) and a Content-Security-Policy
+  for the web app that allows `connect-src` to the API name only, with `frame-ancestors 'none'`. The instance
+  requires IMDSv2 with a hop limit of 1, so containers cannot read the instance role's credentials. The root disk
+  is encrypted. The security group allows 22 from the author's IP and 80 and 443 from anywhere. The instance role
+  has the SSM policy only.
+- Alternative: only the brief's minimum (security group and encrypted disk).
+- Why / trade-off: closes the open CSP item from phase 4 and the container-to-credentials path, at the cost of a few
+  more lines to explain. The CSP must be kept in step with the API name. Automatic OS updates, WAF and SSM-only access
+  (closing 22) are named as next steps, not built.
+
+## D36. Container logs go to CloudWatch Logs through the `awslogs` driver (phase 5)
+- Decision: the production compose file sends every container's logs to one CloudWatch log group (created by
+  Terraform, 14-day retention). The instance role may write to that group only. The API's JSON logs (D9) can be
+  queried in CloudWatch Logs Insights; `docker compose logs` still works on the instance through Docker's local cache.
+- Alternative: Docker's local `json-file` logs with rotation, read over SSH.
+- Why / trade-off: logs survive the instance and can be searched without SSH, which also gives the README's
+  observability section a working base. Costs a few cents a month, a little more Terraform and IAM, and a
+  dependency on CloudWatch for log delivery.

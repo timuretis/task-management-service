@@ -1,8 +1,20 @@
 #!/usr/bin/env bash
 # Smoke test for a running stack: does the app work end to end over HTTP?
 # Usage: docker compose up --build --wait && bash scripts/smoke-test.sh
+#        API_URL=https://... WEB_URL=https://... bash scripts/smoke-test.sh --read-only
 # The same script runs in CI. It stops at the first failed check with a clear message.
+# --read-only skips the check that creates a task, so it is safe to run against production (D34).
 set -euo pipefail
+
+READ_ONLY=false
+case "${1:-}" in
+  --read-only) READ_ONLY=true ;;
+  "") ;;
+  *)
+    echo "usage: $0 [--read-only]" >&2
+    exit 2
+    ;;
+esac
 
 API_URL="${API_URL:-http://localhost:3000}"
 WEB_URL="${WEB_URL:-http://localhost:8080}"
@@ -58,5 +70,7 @@ check_create_and_list() {
 check_health
 check_web_page
 check_cors
-check_create_and_list
+if [ "$READ_ONLY" = false ]; then
+  check_create_and_list
+fi
 echo "smoke test: OK"

@@ -3,6 +3,9 @@
 REST API and React client for managing tasks, deployed to AWS.
 
 ## Live URL
+- Web app: https://tasks.timur.co.il
+- API: https://tasks-api.timur.co.il (try `/health` and `/tasks`)
+
 ## Local setup
 Requires Node 24 (see `.nvmrc`).
 
@@ -94,21 +97,31 @@ TEST_DATABASE_URL=postgres://tasks:tasks@127.0.0.1:5432/tasks_test bash scripts/
 ## Continuous integration
 GitHub Actions (`.github/workflows/ci.yml`, D25) runs on every pull request and every push to `main`,
 with a read-only token. A newer push to a PR cancels its run still in progress; runs on `main` always finish.
-Two jobs run in parallel:
+Two jobs run in parallel, and a third deploys after both pass on `main` (see Deployment):
 - **Lint, test, build**: `bash scripts/verify.sh` with a `postgres:18` service and `TEST_DATABASE_URL` set,
   so the real-Postgres suite runs on every change.
 - **Images and smoke test**: `docker compose up --build --wait`, then `scripts/smoke-test.sh`; service logs
-  are printed if anything fails.
+  are printed if anything fails. It also checks `compose.prod.yml` and the `Caddyfile`.
 
-No image is published and nothing is deployed yet (phase 5). Pushing a change to a workflow file needs a
+Pushing a change to a workflow file needs a
 GitHub token with the `workflow` scope (`gh auth refresh -s workflow`, then `gh auth setup-git`).
 
 ## Deployment
+Every push to `main` that passes CI is deployed to one AWS EC2 instance (Frankfurt) created with Terraform in
+[`infra/`](infra). Caddy serves HTTPS for the web app and the API, the containers run from images tagged with the
+commit SHA, and logs go to CloudWatch. CI signs in to AWS with OIDC (no stored keys) and deploys through SSM, then
+runs a read-only smoke test against the live URLs.
+
+- First-time setup, DNS, rollback, database tunnel, logs and teardown: [docs/aws-setup.md](docs/aws-setup.md).
+- Why it is built this way: [DECISIONS.md](docs/DECISIONS.md) D27-D36.
+- Cost while running is about $20-25 a month; `terraform destroy` stops it (and deletes the database). The instance
+  is protected against accidental destroy, so teardown is deliberate (see the guide).
 ## System Architecture
 ### Scalability (10x traffic)
 - Rate limit counters (`@nestjs/throttler`) live in each instance's memory. With several
   instances the limits apply per instance; share them through Redis at that point.
-- Behind a load balancer set Express `trust proxy` (phase 5), or every user shares the proxy's IP.
+- Behind a proxy or load balancer set `TRUST_PROXY` to the number of hops (production already sets 1 for Caddy),
+  or every user shares the proxy's IP in the rate limit.
 - The database pool allows 10 connections per instance, so N instances can open 10 x N; keep that
   below PostgreSQL's `max_connections` (or add a pooler such as PgBouncer) before scaling out.
 - `GET /tasks` reads 100 rows through an index on `(created_at DESC, id DESC)`, so its cost does not
