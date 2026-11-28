@@ -140,8 +140,8 @@ runs a read-only smoke test against the live URLs.
 - Why it is built this way: [DECISIONS.md](docs/DECISIONS.md) D27-D36.
 - Cost while running is about $20-25 a month; `terraform destroy` stops it (and deletes the database). The instance
   is protected against accidental destroy, so teardown is deliberate (see the guide).
-## System Architecture
-### Scalability (10x traffic)
+
+## Scalability (10x traffic)
 - Rate limit counters (`@nestjs/throttler`) live in each instance's memory. With several
   instances the limits apply per instance; share them through Redis at that point.
 - Behind a proxy or load balancer set `TRUST_PROXY` to the number of hops (production already sets 1 for Caddy),
@@ -153,5 +153,7 @@ runs a read-only smoke test against the live URLs.
 - Every open browser tab polls `GET /health` every 30 seconds, which runs one `SELECT 1`. `/health` is
   exempt from rate limiting, so at 10x traffic this adds steady, cheap load; a longer interval or a
   readiness endpoint that does not touch the database would reduce it.
-### Observability
-### AI Utilization
+
+## Observability
+
+## AI Utilization
