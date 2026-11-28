@@ -72,7 +72,9 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # The folder, not the file: a deploy replaces the file (git checkout), and a single-file mount would keep
+      # showing the old one. deploy.sh then reloads Caddy to pick up the change.
+      - ./caddy:/etc/caddy:ro
       # Certificates and the Let's Encrypt account; losing them on a redeploy would risk its rate limits.
       - caddy-data:/data
     depends_on:
