@@ -46,3 +46,14 @@ observed and how AI was used, including a real correction, and every statement m
 - New code or behaviour changes, including the Scalability improvements the README only describes.
 - Diagrams as images, a changelog, an API reference, a link-checker dependency.
 - Changing the deployed infrastructure.
+
+### Task 7 results (2026-11-28)
+- Claims checked against the code: Scalability (rate limit 100 a minute and 20 for `POST /tasks`, `/health` exempt, pool of
+  10, index and `LIMIT 100`, 30 second poll), Observability (log fields and levels, the 2 second `SELECT 1` timeout,
+  14-day retention, container healthchecks, `up --wait` in the deploy), Architecture (ports, services). One error was
+  found and fixed while writing: the database also listens on the instance's loopback for the SSH tunnel (D32).
+- Added to Scalability: the single-instance and no-backup limit with the RDS step, which D27 said the README would describe.
+- README relative links and the files and scripts it names all exist. No secrets or personal details in the new text.
+- `bash scripts/verify.sh`: OK.
+- Live `GET /health`: not run in this session. The network allowlist did not include the host, and the live request was
+  then denied by the permission check. Last verified live in phase 5, task 9.
