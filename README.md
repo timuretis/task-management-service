@@ -6,6 +6,30 @@ REST API and React client for managing tasks, deployed to AWS.
 - Web app: https://tasks.timur.co.il
 - API: https://tasks-api.timur.co.il (try `/health` and `/tasks`)
 
+## Architecture
+```
+ Browser
+    |  HTTPS (Let's Encrypt, renewed by Caddy)
+    v
+ Caddy :80/:443 --- tasks.timur.co.il ------> web   (React build served by nginx)
+    |
+    +------------- tasks-api.timur.co.il ---> api   (NestJS, port 3000)
+                                                |
+                                                v
+                                          db   (PostgreSQL 18, volume on the instance disk)
+
+ migrate  runs once per deploy from the API image, then exits; api starts only after it succeeds
+ Everything above is one docker compose stack (compose.prod.yml) on one EC2 instance in Frankfurt.
+ All container logs go to CloudWatch Logs. The browser calls the API directly over CORS (D22).
+```
+
+- Only Caddy is reachable from the internet (ports 80 and 443); the API and web ports exist only inside the compose
+  network. The database also listens on the instance's loopback for the author's SSH tunnel (D32), and SSH itself is
+  open only to the author's IP.
+- The browser loads the page from `web` and then calls the API's own name, so the two are separate origins.
+- Terraform ([`infra/`](infra)) creates the instance, firewall, IAM roles and log group; GitHub Actions builds the images
+  and deploys by commit SHA. The choices behind each box are in [DECISIONS.md](docs/DECISIONS.md) D24-D36.
+
 ## Local setup
 Requires Node 24 (see `.nvmrc`).
 
