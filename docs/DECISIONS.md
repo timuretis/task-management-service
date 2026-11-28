@@ -307,3 +307,12 @@ Newest at the bottom. Format:
 - Why / trade-off: logs survive the instance and can be searched without SSH, which also gives the README's
   observability section a working base. Costs a few cents a month, a little more Terraform and IAM, and a
   dependency on CloudWatch for log delivery.
+
+## D37. The AI log separates author corrections from bugs the AI found itself (phase 6)
+- Decision: `docs/ai-log.md` keeps its main table for corrections the author made to AI output. A second table lists
+  bugs the AI introduced and later found and fixed itself (the three post-phase-5 fixes: OIDC subject, duplicate
+  HSTS header, stale Caddy file mount). The README's AI section names the model split (Opus plans, Sonnet builds) and
+  uses an author correction as its required example.
+- Alternative: one merged table.
+- Why / trade-off: the requirement asks for a correction made to AI output, and presenting AI-found bugs as the
+  author's corrections would overstate the author's role. Costs a second table to maintain.

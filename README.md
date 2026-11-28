@@ -6,6 +6,30 @@ REST API and React client for managing tasks, deployed to AWS.
 - Web app: https://tasks.timur.co.il
 - API: https://tasks-api.timur.co.il (try `/health` and `/tasks`)
 
+## Architecture
+```
+ Browser
+    |  HTTPS (Let's Encrypt, renewed by Caddy)
+    v
+ Caddy :80/:443 --- tasks.timur.co.il ------> web   (React build served by nginx)
+    |
+    +------------- tasks-api.timur.co.il ---> api   (NestJS, port 3000)
+                                                |
+                                                v
+                                          db   (PostgreSQL 18, volume on the instance disk)
+
+ migrate  runs once per deploy from the API image, then exits; api starts only after it succeeds
+ Everything above is one docker compose stack (compose.prod.yml) on one EC2 instance in Frankfurt.
+ All container logs go to CloudWatch Logs. The browser calls the API directly over CORS (D22).
+```
+
+- Only Caddy is reachable from the internet (ports 80 and 443); the API and web ports exist only inside the compose
+  network. The database also listens on the instance's loopback for the author's SSH tunnel (D32), and SSH itself is
+  open only to the author's IP.
+- The browser loads the page from `web` and then calls the API's own name, so the two are separate origins.
+- Terraform ([`infra/`](infra)) creates the instance, firewall, IAM roles and log group; GitHub Actions builds the images
+  and deploys by commit SHA. The choices behind each box are in [DECISIONS.md](docs/DECISIONS.md) D24-D36.
+
 ## Local setup
 Requires Node 24 (see `.nvmrc`).
 
@@ -116,8 +140,11 @@ runs a read-only smoke test against the live URLs.
 - Why it is built this way: [DECISIONS.md](docs/DECISIONS.md) D27-D36.
 - Cost while running is about $20-25 a month; `terraform destroy` stops it (and deletes the database). The instance
   is protected against accidental destroy, so teardown is deliberate (see the guide).
-## System Architecture
-### Scalability (10x traffic)
+
+## Scalability (10x traffic)
+- Today everything runs on one instance, so the first limits are that instance and its disk, and there are no managed
+  backups (D27). The first step for 10x is PostgreSQL on RDS (backups, Multi-AZ); then run several API containers
+  behind a load balancer. The API keeps no state in memory except the rate limit counters below, so it can be copied.
 - Rate limit counters (`@nestjs/throttler`) live in each instance's memory. With several
   instances the limits apply per instance; share them through Redis at that point.
 - Behind a proxy or load balancer set `TRUST_PROXY` to the number of hops (production already sets 1 for Caddy),
@@ -129,5 +156,58 @@ runs a read-only smoke test against the live URLs.
 - Every open browser tab polls `GET /health` every 30 seconds, which runs one `SELECT 1`. `/health` is
   exempt from rate limiting, so at 10x traffic this adds steady, cheap load; a longer interval or a
   readiness endpoint that does not touch the database would reduce it.
-### Observability
-### AI Utilization
+
+## Observability
+What exists today:
+- **Request logs.** A custom middleware (D9) writes one JSON line per request when the response finishes: method, path
+  without the query string, status code, duration in ms and a request ID. The ID is taken from a valid `x-request-id`
+  header or generated, and is sent back in the response, so one user report can be traced to one log line. Bodies,
+  query strings and other headers are never logged. Status 5xx logs at error level and 4xx at warn.
+- **Where to read them.** In production each container's output goes to one CloudWatch log group with 14 days of
+  retention (D36). Logs Insights reads the JSON fields, nested under `message`, for example
+  `filter message.statusCode >= 500 | sort @timestamp desc`. `aws logs tail` and the steps are in
+  [docs/aws-setup.md](docs/aws-setup.md).
+- **Health.** `GET /health` returns status, uptime and a timestamp, and answers 503 when `SELECT 1` fails or takes
+  over 2 seconds (D20). The API and web containers have Docker healthchecks, and a deploy waits for them.
+- **After every deploy.** CI runs a read-only smoke test against the live URLs (D34), so a broken release fails the
+  pipeline instead of waiting to be noticed.
+
+What is missing, and the next step for each:
+- No alerts: a CloudWatch alarm on the log group's 5xx count, plus an uptime check on `/health`, would page someone.
+- No metrics or dashboards: request rate and latency can be derived from the logs today; a metrics endpoint (for
+  example Prometheus) would be the next step once there is more than one instance.
+- No tracing: the request ID links log lines of one request but not calls across services; with one API and one
+  database that is enough for now.
+
+## AI Utilization
+The code was written with Claude Code under rules the author set and checked in the repository
+(`AGENTS.md`, `CLAUDE.md`, `.claude/`). The author decided each design question, choosing from options the AI proposed; the answers are in
+[DECISIONS.md](docs/DECISIONS.md), and the author reviewed and merged every pull request.
+
+**How the work was organised** (D1-D4):
+- **Opus plans, Sonnet builds.** Each phase starts with `/brainstorm` (an interview, one question at a time) and
+  `/to-spec` (a short spec with ordered tasks in `docs/phases/`), both on Opus. The building runs mostly on Sonnet, in small
+  commits that follow the spec (some work, such as the phase 4 Dockerfile, ran on Opus; see the log). Opus is better at design choices, and Sonnet is enough for coding to an agreed spec.
+- **Project skills** for NestJS, React, testing and infrastructure load only for matching work, so each task sees the
+  rules it needs and no more.
+- **Hooks enforce the rules the author cannot watch all day:** no commits or pushes on `main`, and a question before
+  any pull request is merged.
+- **One independent review per phase.** A read-only `code-reviewer` subagent, which did not write the code, reviews
+  the whole phase diff before the pull request is opened.
+- **Humans do what is irreversible.** Claude writes and validates the Terraform; the author runs `terraform apply`
+  (D5), so AWS keys never reach the AI environment.
+
+**Where it helped and where it did not.** It was fast at scaffolding, tests, Dockerfiles, Terraform and this
+documentation, and at spotting inconsistencies once it was told to compare a claim with the code. It was weaker at
+details that only show up in the real system (a build cache, GitHub's token format, how a file mount behaves
+after a deploy), which is where the faults below came from.
+
+**A correction the author made.** In the API Dockerfile, the build stage copied all of `apps/api/` although the
+compiler only needs `src` and two tsconfig files, so any unrelated edit (a migration, a config file) invalidated the
+cache and reran the compile. The author corrected it, and it now copies those paths explicitly. The full entry is
+in [docs/ai-log.md](docs/ai-log.md), which records every correction by the author.
+
+**Bugs the AI introduced and found itself.** After phase 5 three faults turned up in the AI's own work: a deploy
+trust policy written for an older GitHub token format, a duplicated HSTS header on the API, and a Caddy config mount
+that hid changes after a deploy. The first two were found by checking the real deployment, which no unit test could
+do. They are in a separate table in the same log, because they were not the author's corrections.
