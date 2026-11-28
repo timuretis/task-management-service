@@ -56,4 +56,4 @@ observed and how AI was used, including a real correction, and every statement m
 - Added to Scalability: the single-instance and no-backup limit with the RDS step, which D27 said the README would describe.
 - README relative links and the files and scripts it names all exist. No secrets or personal details in the new text.
 - `bash scripts/verify.sh`: OK.
-- Live `GET /health`: run by the author after the PR was opened; answered `{"status":"ok","uptime":2506,...}` (200, status ok).
+- Live `GET /health`: run by the author after the PR was opened; answered `{"status":"ok","uptime":2506,...}` (status ok).
