@@ -158,5 +158,25 @@ runs a read-only smoke test against the live URLs.
   readiness endpoint that does not touch the database would reduce it.
 
 ## Observability
+What exists today:
+- **Request logs.** A custom middleware (D9) writes one JSON line per request when the response finishes: method, path
+  without the query string, status code, duration in ms and a request ID. The ID is taken from a valid `x-request-id`
+  header or generated, and is sent back in the response, so one user report can be traced to one log line. Bodies,
+  query strings and other headers are never logged. Status 5xx logs at error level and 4xx at warn.
+- **Where to read them.** In production each container's output goes to one CloudWatch log group with 14 days of
+  retention (D36). Logs Insights reads the JSON fields, nested under `message`, for example
+  `filter message.statusCode >= 500 | sort @timestamp desc`. `aws logs tail` and the steps are in
+  [docs/aws-setup.md](docs/aws-setup.md).
+- **Health.** `GET /health` returns status, uptime and a timestamp, and answers 503 when `SELECT 1` fails or takes
+  over 2 seconds (D20). The API and web containers have Docker healthchecks, and a deploy waits for them.
+- **After every deploy.** CI runs a read-only smoke test against the live URLs (D34), so a broken release fails the
+  pipeline instead of waiting to be noticed.
+
+What is missing, and the next step for each:
+- No alerts: a CloudWatch alarm on the log group's 5xx count, plus an uptime check on `/health`, would page someone.
+- No metrics or dashboards: request rate and latency can be derived from the logs today; a metrics endpoint (for
+  example Prometheus) would be the next step once there is more than one instance.
+- No tracing: the request ID links log lines of one request but not calls across services; with one API and one
+  database that is enough for now.
 
 ## AI Utilization
