@@ -46,6 +46,11 @@ terraform import aws_iam_openid_connect_provider.github \
   arn:aws:iam::<account id>:oidc-provider/token.actions.githubusercontent.com
 ```
 
+If a deploy later fails with "Not authorized to perform sts:AssumeRoleWithWebIdentity", the role's trust no longer
+matches the repository's token name. Run
+`gh api repos/<owner>/<repo>/actions/oidc/customization/sub --jq .sub_claim_prefix`, put the result in
+`github_subject_prefix` (`infra/variables.tf` default or `terraform.tfvars`) and run `apply`.
+
 `apply` prints the outputs. **Keep `infra/terraform.tfstate` safe** (copy it somewhere private): Terraform needs it to
 manage or destroy what it built (D31).
 
