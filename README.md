@@ -101,7 +101,7 @@ Two jobs run in parallel, and a third deploys after both pass on `main` (see Dep
 - **Lint, test, build**: `bash scripts/verify.sh` with a `postgres:18` service and `TEST_DATABASE_URL` set,
   so the real-Postgres suite runs on every change.
 - **Images and smoke test**: `docker compose up --build --wait`, then `scripts/smoke-test.sh`; service logs
-  are printed if anything fails. It also checks `compose.prod.yml` and the `Caddyfile`.
+  are printed if anything fails. It also checks `compose.prod.yml` and the `caddy/Caddyfile`.
 
 Pushing a change to a workflow file needs a
 GitHub token with the `workflow` scope (`gh auth refresh -s workflow`, then `gh auth setup-git`).

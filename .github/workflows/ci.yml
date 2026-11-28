@@ -60,7 +60,7 @@ jobs:
       - name: Check the production compose file
         run: POSTGRES_PASSWORD=ci IMAGE_TAG=ci docker compose -f compose.prod.yml config --quiet
       - name: Check the Caddyfile
-        run: docker run --rm -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2.11-alpine caddy validate --config /etc/caddy/Caddyfile
+        run: docker run --rm -v "$PWD/caddy:/etc/caddy:ro" caddy:2.11-alpine caddy validate --config /etc/caddy/Caddyfile
       # Builds both images and waits until every service is healthy (migrate must exit 0).
       - name: Start the stack
         run: docker compose up --build --wait --wait-timeout 120

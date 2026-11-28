@@ -27,4 +27,7 @@ mv .env.new .env
 # database container during an unrelated deploy.
 docker compose -f compose.prod.yml pull --quiet api web migrate
 docker compose -f compose.prod.yml up -d --wait --remove-orphans
+# `up` recreates a container only when its compose settings change, not when Caddyfile changes. Reload
+# makes Caddy re-read it without dropping connections (and fails the deploy if the file is invalid).
+docker compose -f compose.prod.yml exec -T caddy caddy reload --config /etc/caddy/Caddyfile
 echo "deployed $SHA"
