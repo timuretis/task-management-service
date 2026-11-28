@@ -141,7 +141,10 @@ runs a read-only smoke test against the live URLs.
 - Cost while running is about $20-25 a month; `terraform destroy` stops it (and deletes the database). The instance
   is protected against accidental destroy, so teardown is deliberate (see the guide).
 
-## Scalability (10x traffic)
+## System Architecture
+The deployment diagram is in [Architecture](#architecture) above. The three questions from the assignment follow.
+
+### Scalability (10x traffic)
 - Today everything runs on one instance, so the first limits are that instance and its disk, and there are no managed
   backups (D27). The first step for 10x is PostgreSQL on RDS (backups, Multi-AZ); then run several API containers
   behind a load balancer. The API keeps no state in memory except the rate limit counters below, so it can be copied.
@@ -157,7 +160,7 @@ runs a read-only smoke test against the live URLs.
   exempt from rate limiting, so at 10x traffic this adds steady, cheap load; a longer interval or a
   readiness endpoint that does not touch the database would reduce it.
 
-## Observability
+### Observability
 What exists today:
 - **Request logs.** A custom middleware (D9) writes one JSON line per request when the response finishes: method, path
   without the query string, status code, duration in ms and a request ID. The ID is taken from a valid `x-request-id`
@@ -179,7 +182,7 @@ What is missing, and the next step for each:
 - No tracing: the request ID links log lines of one request but not calls across services; with one API and one
   database that is enough for now.
 
-## AI Utilization
+### AI Utilization
 The code was written with Claude Code under rules the author set and checked in the repository
 (`AGENTS.md`, `CLAUDE.md`, `.claude/`). The author decided each design question, choosing from options the AI proposed; the answers are in
 [DECISIONS.md](docs/DECISIONS.md), and the author reviewed and merged every pull request.
