@@ -43,8 +43,12 @@ variable "log_group_name" {
   default     = "/task-management-service"
 }
 
-variable "github_repository" {
-  description = "The GitHub repository (owner/name) whose main branch may deploy (D29)."
+variable "github_subject_prefix" {
+  description = <<-EOT
+    How GitHub names this repository inside its OIDC token (D29). GitHub now puts the numeric owner and repo IDs in
+    the name, so renaming or transferring a repo cannot hand its access to someone else. Find yours with:
+    gh api repos/OWNER/REPO/actions/oidc/customization/sub --jq .sub_claim_prefix
+  EOT
   type        = string
-  default     = "timuretis/task-management-service"
+  default     = "repo:timuretis@7100371/task-management-service@1472149549"
 }

@@ -238,7 +238,8 @@ Newest at the bottom. Format:
 - Decision: on a push to `main`, GitHub Actions gets short-lived AWS credentials through OIDC (an IAM role that
   trusts only this repository's `main` branch) and runs the deploy command on the instance with SSM Run Command,
   then waits for its result and fails the run if it failed. The instance has an IAM role for the SSM agent.
-  SSH stays open only to the author's IP and is never used by CI.
+  SSH stays open only to the author's IP and is never used by CI. The role names the repository the way GitHub's
+  token now does, with the numeric owner and repo IDs (`repo:owner@id/name@id`), not the plain `owner/name`.
 - Alternative: SSH from GitHub Actions with a private key in GitHub Secrets.
 - Why / trade-off: no long-lived AWS keys or SSH keys in GitHub, and port 22 is not opened to GitHub's thousands of
   runner IP ranges. Costs more Terraform (OIDC provider, deploy role, instance role) and more concepts to explain.
