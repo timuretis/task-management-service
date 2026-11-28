@@ -180,3 +180,34 @@ What is missing, and the next step for each:
   database that is enough for now.
 
 ## AI Utilization
+The code was written with Claude Code under rules the author set and checked in the repository
+(`AGENTS.md`, `CLAUDE.md`, `.claude/`). The author chose every design decision; each phase's answers are in
+[DECISIONS.md](docs/DECISIONS.md), and the author reviewed and merged every pull request.
+
+**How the work was organised** (D1-D4):
+- **Opus plans, Sonnet builds.** Each phase starts with `/brainstorm` (an interview, one question at a time) and
+  `/to-spec` (a short spec with ordered tasks in `docs/phases/`), both on Opus. The building runs on Sonnet, in small
+  commits that follow the spec. Opus is better at design choices, and Sonnet is enough for coding to an agreed spec.
+- **Project skills** for NestJS, React, testing and infrastructure load only for matching work, so each task sees the
+  rules it needs and no more.
+- **Hooks enforce the rules the author cannot watch all day:** no commits or pushes on `main`, and a question before
+  any pull request is merged.
+- **One independent review per phase.** A read-only `code-reviewer` subagent, which did not write the code, reviews
+  the whole phase diff before the pull request is opened.
+- **Humans do what is irreversible.** Claude writes and validates the Terraform; the author runs `terraform apply`
+  (D5), so AWS keys never reach the AI environment.
+
+**Where it helped and where it did not.** It was fast at scaffolding, tests, Dockerfiles, Terraform and this
+documentation, and at spotting inconsistencies once it was told to compare a claim with the code. It was weaker at
+details that only show up in the real system (a build cache, GitHub's token format, how a file mount behaves
+after a deploy), which is where the faults below came from.
+
+**A correction the author made.** In the API Dockerfile, the build stage copied all of `apps/api/` although the
+compiler only needs `src` and two tsconfig files, so any unrelated edit (a migration, a config file) invalidated the
+cache and reran the compile. The author corrected it, and it now copies those paths explicitly. The full entry is
+in [docs/ai-log.md](docs/ai-log.md), which records every correction by the author.
+
+**Bugs the AI introduced and found itself.** After phase 5 three faults turned up in the AI's own work: a deploy
+trust policy written for an older GitHub token format, a duplicated HSTS header on the API, and a Caddy config mount
+that hid changes after a deploy. The first two were found by checking the real deployment, which no unit test could
+do. They are in a separate table in the same log, because they were not the author's corrections.
