@@ -142,6 +142,9 @@ runs a read-only smoke test against the live URLs.
   is protected against accidental destroy, so teardown is deliberate (see the guide).
 
 ## Scalability (10x traffic)
+- Today everything runs on one instance, so the first limits are that instance and its disk, and there are no managed
+  backups (D27). The first step for 10x is PostgreSQL on RDS (backups, Multi-AZ); then run several API containers
+  behind a load balancer. The API keeps no state in memory except the rate limit counters below, so it can be copied.
 - Rate limit counters (`@nestjs/throttler`) live in each instance's memory. With several
   instances the limits apply per instance; share them through Redis at that point.
 - Behind a proxy or load balancer set `TRUST_PROXY` to the number of hops (production already sets 1 for Caddy),
